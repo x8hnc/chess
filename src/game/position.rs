@@ -34,10 +34,6 @@ impl Position {
     }
 
     pub fn evaluate(&self) -> isize {
-        if self.is_checkmate() {
-            return isize::MIN;
-        }
-
         let (friendly_pieces, enemy_pieces) = match self.board.turn() {
             Color::White => (self.board.white_pieces(), self.board.black_pieces()),
             Color::Black => (self.board.black_pieces(), self.board.white_pieces()),

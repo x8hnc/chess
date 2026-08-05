@@ -11,7 +11,7 @@ pub struct Chess {
 }
 
 impl Chess {
-    const BOT_DEPTH: u8 = 4;
+    const BOT_DEPTH: u8 = 5;
     pub fn new() -> Self {
         Self {
             position: Position::new(),
@@ -39,7 +39,7 @@ impl Chess {
                     position.save();
                     position.make_move(m);
 
-                    let eval = -Self::negamax(&mut position, Self::BOT_DEPTH);
+                    let eval = -Self::negamax(&mut position, Self::BOT_DEPTH - 1, isize::MIN + 1, isize::MAX);
 
                     position.load();
 
@@ -68,23 +68,35 @@ impl Chess {
         best_move
     }
 
-    fn negamax(position: &mut Position, depth: u8) -> isize {
+    fn negamax(position: &mut Position, depth: u8, mut alpha: isize, beta: isize) -> isize {
+        if position.is_checkmate() {
+            return -isize::MAX;
+        }
+
         if depth == 0 {
             return position.evaluate();
         }
 
-        let mut eval = isize::MIN;
+        let mut best = isize::MIN;
         let legal_moves = position.find_legal_moves();
 
         for m in legal_moves.into_iter() {
             position.save();
             position.make_move(m);
 
-            eval = eval.max(-Self::negamax(position, depth - 1));
+            let score = -Self::negamax(position, depth - 1, -beta, -alpha);
+
             position.load();
+
+            best = best.max(score);
+            alpha = alpha.max(score);
+
+            if alpha >= beta {
+                break;
+            }
         }
 
-        eval
+        best
     }
 
     pub fn bot_move(&mut self) -> MoveResult {
