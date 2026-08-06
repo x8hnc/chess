@@ -5,8 +5,8 @@ use crate::{
 const CURRENT_TURN_LINE: usize = 0;
 const BOARD_START_LINE: usize = 1;
 const MESSAGE_LINE: usize = BOARD_START_LINE + 12;
-const USER_PROMPT: &str = "your move: ";
-const BOT_PROMPT: &str = "bot move, please wait.";
+const USER_PROMPT: &str = "Your move: ";
+const BOT_PROMPT: &str = "Bot move, please wait.";
 
 pub fn clear_screen() {
     terminal::clear_screen()

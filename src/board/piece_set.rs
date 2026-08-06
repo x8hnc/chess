@@ -114,15 +114,6 @@ impl PieceSet {
         self.en_passant = 0;
     }
 
-    pub fn capture_en_passant(&mut self, square: Square, current_turn: Color) {
-        let capture_square = match current_turn {
-            Color::White => Square::new(square.row() - 1, square.column()),
-            Color::Black => Square::new(square.row() + 1, square.column()),
-        };
-
-        self.remove_piece(capture_square);
-    }
-
     pub fn find_piece(&self, piece: Piece) -> Vec<Square> {
         match piece {
             Piece::Pawn => Square::from_bitmap(self.pawns),
@@ -173,6 +164,26 @@ impl PieceSet {
         } else {
             None
         }
+    }
+
+    pub fn find_king(&self) -> Square {
+        let index = self.king.trailing_zeros();
+        let row = index / 8;
+        let col = index % 8;
+
+        Square::new(row as i8, col as i8)
+    }
+
+    pub fn find_en_passant(&self) -> Option<Square> {
+        if self.en_passant.count_ones() == 0 {
+            return None;
+        }
+
+        let index = self.en_passant.trailing_zeros();
+        let row = index / 8;
+        let col = index % 8;
+
+        Some(Square::new(row as i8, col as i8))
     }
 }
 

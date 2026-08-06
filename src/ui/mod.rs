@@ -17,14 +17,14 @@ impl Ui {
         }
     }
 
-    pub fn start(mut self) {
+    pub fn start(mut self, play_first: bool) {
         let console = std::io::stdin();
         let mut user_input = String::new();
 
         ui_helper::clear_screen();
         ui_helper::print_current_turn(self.chess.board().turn());
 
-        let mut bot_move = false;
+        let mut bot_move = !play_first;
 
         loop {
             ui_helper::print_board(&self.chess.board().to_string(), bot_move);
@@ -50,13 +50,18 @@ impl Ui {
 
                 self.chess.make_move(movement)
             } else {
-                self.chess.bot_move()
+                let bot_move = self.chess.search();
+                ui_helper::print_message(&format!("Bot moved: {}.", bot_move.to_string())[..]);
+
+                self.chess.make_move(bot_move)
             };
 
             match move_result {
                 MoveResult::Ok => {
+                    if !bot_move {
+                        ui_helper::clear_message();
+                    }
                     bot_move = !bot_move;
-                    ui_helper::clear_message();
                 }
                 MoveResult::Illegal => {
                     ui_helper::print_message("Move is not legal.");

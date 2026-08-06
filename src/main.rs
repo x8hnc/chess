@@ -5,5 +5,12 @@ mod game;
 mod ui;
 
 fn main() {
-    Ui::new().start();
+    let args: Vec<String> = std::env::args().collect();
+    let play_first = if args.contains(&String::from("-b")) {
+        false
+    } else {
+        true
+    };
+
+    Ui::new().start(play_first);
 }

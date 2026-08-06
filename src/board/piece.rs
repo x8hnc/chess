@@ -14,11 +14,11 @@ pub enum Piece {
 
 pub const PIECE_TYPES: [Piece; 6] = [
     Piece::Pawn,
-    Piece::Bishop,
     Piece::Rook,
-    Piece::King,
     Piece::Knight,
+    Piece::Bishop,
     Piece::Queen,
+    Piece::King,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -194,6 +194,17 @@ impl Piece {
             Piece::Bishop => 330 + Self::BISHOP_TABLE[square_index],
             Piece::Queen => 900 + Self::QUEEN_TABLE[square_index],
             Piece::King => { if endgame { Self::KING_TABLE_ENDGAME[square_index] } else { Self::KING_TABLE[square_index] }},
+        }
+    }
+
+    pub fn to_index(&self) -> usize {
+        match self {
+            Piece::Pawn => 0,
+            Piece::Rook => 1,
+            Piece::Knight => 2,
+            Piece::Bishop => 3,
+            Piece::Queen => 4,
+            Piece::King => 5,
         }
     }
 }
