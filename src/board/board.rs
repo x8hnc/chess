@@ -33,7 +33,6 @@ pub struct Board {
     hash: u64,
     zobrist: Zobrist,
     moves: Vec<Move>,
-    // undo_stack: Vec<Undo>,
 }
 
 impl Board {
@@ -75,7 +74,6 @@ impl Board {
             zobrist,
             hash,
             moves: Vec::with_capacity(Self::MAX_MOVE),
-            // undo_stack: Vec::with_capacity(Self::MAX_MOVE),
         }
     }
 
@@ -95,12 +93,8 @@ impl Board {
             zobrist: Zobrist::new(),
             hash: 0,
             moves: Vec::with_capacity(Self::MAX_MOVE),
-            // undo_stack: Vec::new(),
         };
 
-        //
-        // Piece placement
-        //
         let mut row = 7;
         let mut col = 0;
 
@@ -148,18 +142,12 @@ impl Board {
             }
         }
 
-        //
-        // Side to move
-        //
         board.turn = match parts[1] {
             "w" => Color::White,
             "b" => Color::Black,
             _ => return Err("Invalid side to move".into()),
         };
 
-        //
-        // Castling rights
-        //
         let mut white = CastleRights::_none();
         let mut black = CastleRights::_none();
 
@@ -187,9 +175,6 @@ impl Board {
         board.white_castle_rights = white;
         board.black_castle_rights = black;
 
-        //
-        // En passant
-        //
         if parts[3] != "-" {
             let bytes = parts[3].as_bytes();
 
@@ -207,9 +192,6 @@ impl Board {
                 Color::Black => board.white_pieces.set_en_passant(pos),
             }
         }
-
-        // Halfmove clock (parts[4]) and fullmove number (parts[5])
-        // are ignored since your Board doesn't store them.
 
         Ok(board)
     }
@@ -313,10 +295,6 @@ impl Board {
             }
 
             ctx.enemy_pieces.remove_piece(movement.to());
-
-            // Some((captured, movement.to()))
-        // } else {
-        //     None
         }
     }
 
@@ -355,8 +333,6 @@ impl Board {
         *new_hash ^= ctx
             .zobrist
             .get_piece(!ctx.turn, Piece::Pawn, capture_square);
-
-        // Some((Piece::Pawn, capture_square))
     }
 
     fn handle_pawn_jump(ctx: &mut MoveContext, movement: &Move, new_hash: &mut u64) {
@@ -373,6 +349,7 @@ impl Board {
         new_hash: &mut u64,
     ) {
         ctx.friendly_pieces.remove_piece(movement.to());
+        ctx.enemy_pieces.remove_piece(movement.to());
         ctx.friendly_pieces.add_piece(movement.to(), promoted_piece);
 
         *new_hash ^= ctx.zobrist.get_piece(ctx.turn, Piece::Pawn, movement.to());
@@ -382,11 +359,6 @@ impl Board {
     }
 
     pub fn make_move(&mut self, movement: Move) -> MoveResult {
-        // let undo_white_castle_rights = self.white_castle_rights.clone();
-        // let undo_black_castle_rights = self.black_castle_rights.clone();
-        // let mut captured_piece = None;
-        // let undo_hash = self.hash;
-
         let mut new_hash = self.hash;
         let mut ctx = self.move_context();
         let Some(piece) = ctx.friendly_pieces.get(movement.from()) else {
@@ -412,17 +384,14 @@ impl Board {
         } else {
             Self::handle_capture(&mut ctx, &movement, &mut new_hash);
         }
-        // let mut undo_en_passant = None;
 
         if let Some(en_passant) = ctx.enemy_pieces.find_en_passant() {
             new_hash ^= ctx.zobrist.get_en_passant(en_passant.column() as usize);
-            // undo_en_passant = Some(en_passant);
         }
 
         ctx.enemy_pieces.unset_en_passant();
 
         self.hash = new_hash;
-        // self.undo_stack.push(Undo::new(movement, piece, undo_hash, captured_piece, undo_white_castle_rights, undo_black_castle_rights, undo_en_passant));
 
         MoveResult::Ok
     }
@@ -923,55 +892,6 @@ impl Board {
     pub fn hash(&self) -> u64 {
         self.hash
     }
-
-    // pub fn undo(&mut self) {
-    //     self.turn = !self.turn;
-    //
-    //     let undo = self.undo_stack.pop().unwrap();
-    //
-    //     self.white_castle_rights = undo.white_castle_rights;
-    //     self.black_castle_rights = undo.black_castle_rights;
-    //     self.hash = undo.hash;
-    //
-    //     let ctx = self.move_context();
-    //     if let Some((captured_piece, capture_square)) = undo.captured_piece {
-    //         ctx.enemy_pieces.add_piece(capture_square, captured_piece);
-    //     }
-    //
-    //     ctx.friendly_pieces.unset_en_passant();
-    //     if let Some(en_passant) = undo.en_passant {
-    //         ctx.enemy_pieces.set_en_passant(en_passant);
-    //     }
-    //
-    //     ctx.friendly_pieces.remove_piece(undo.movement.to());
-    //     ctx.friendly_pieces
-    //         .add_piece(undo.movement.from(), undo.piece);
-    //     let move_was_castle = undo.piece == Piece::King
-    //         && undo
-    //             .movement
-    //             .to()
-    //             .column()
-    //             .abs_diff(undo.movement.from().column())
-    //             == 2;
-    //
-    //     if move_was_castle {
-    //         let (current_rook_square, new_rook_square) =
-    //             if undo.movement.to().column() > undo.movement.from().column() {
-    //                 (
-    //                     Square::new(ctx.piece_row, 7),
-    //                     Square::new(ctx.piece_row, undo.movement.to().column() - 1),
-    //                 )
-    //             } else {
-    //                 (
-    //                     Square::new(ctx.piece_row, 0),
-    //                     Square::new(ctx.piece_row, undo.movement.to().column() + 1),
-    //                 )
-    //             };
-    //
-    //         ctx.friendly_pieces.add_piece(current_rook_square, Piece::Rook);
-    //         ctx.friendly_pieces.remove_piece(new_rook_square);
-    //     }
-    // }
 }
 
 impl Display for Board {
@@ -1031,7 +951,6 @@ impl Clone for Board {
             hash: self.hash.clone(),
             zobrist: self.zobrist.clone(),
             moves: Vec::with_capacity(Self::MAX_MOVE),
-            // undo_stack: self.undo_stack.clone(),
         }
     }
 }

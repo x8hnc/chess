@@ -1,7 +1,17 @@
-use crate::board::square::{Move, Square};
-
 pub struct TranspositionTable {
+    stats: TTStats,
     entries: Vec<TTEntry>,
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct TTStats {
+    pub probes: u64,
+    pub hits: u64,
+    pub insufficient_depth: u64,
+    pub usable: u64,
+    pub exact_cutoffs: u64,
+    pub lower_bound_hit: u64,
+    pub upper_bound_hit: u64,
 }
 
 #[derive(Copy, Clone)]
@@ -11,18 +21,28 @@ pub enum Bound {
     Upper,
 }
 
-#[derive(Copy, Clone)]
+impl Default for Bound {
+    fn default() -> Self {
+        Self::Exact
+    }
+}
+
+#[derive(Copy, Clone, Default)]
 pub struct TTEntry {
     hash: u64,
     depth: u8,
     score: isize,
     bound: Bound,
-    best: Move,
 }
 
 impl TTEntry {
-    pub fn new(hash: u64, depth: u8, score: isize, best: Move, bound: Bound) -> Self {
-        Self { hash, depth, score, best, bound }
+    pub fn new(hash: u64, depth: u8, score: isize, bound: Bound) -> Self {
+        Self {
+            hash,
+            depth,
+            score,
+            bound,
+        }
     }
 
     pub fn depth(&self) -> u8 {
@@ -33,10 +53,6 @@ impl TTEntry {
         self.score
     }
 
-    pub fn best(&self) -> Move {
-        self.best
-    }
-
     pub fn bound(&self) -> Bound {
         self.bound
     }
@@ -45,7 +61,8 @@ impl TTEntry {
 impl TranspositionTable {
     pub fn new(size: usize) -> Self {
         Self {
-            entries: vec![TTEntry::new(0, 0, 0, Move::new(Square::new(0, 0), Square::new(0, 0), None), Bound::Exact); 1 << size],
+            entries: vec![TTEntry::default(); 1 << size],
+            stats: TTStats::default(),
         }
     }
 
@@ -59,16 +76,25 @@ impl TranspositionTable {
         self.entries[index] = entry;
     }
 
-    pub fn contains(&self, hash: u64) -> bool {
+    pub fn get(&mut self, hash: u64) -> Option<TTEntry> {
         let index = self.hash_to_index(hash);
         let existing = self.entries[index];
 
-        existing.hash == hash
+        self.stats.probes += 1;
+
+        if existing.hash != hash {
+            return None;
+        }
+
+        self.stats.hits += 1;
+        Some(existing)
     }
 
-    pub fn get(&self, hash: u64) -> TTEntry {
-        let index = self.hash_to_index(hash);
+    pub fn stats_mut(&mut self) -> &mut TTStats {
+        &mut self.stats
+    }
 
-        self.entries[index]
+    pub fn stats(&self) -> TTStats {
+        self.stats
     }
 }

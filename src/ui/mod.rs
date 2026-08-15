@@ -50,8 +50,8 @@ impl Ui {
 
                 self.chess.make_move(movement)
             } else {
-                let bot_move = self.chess.search();
-                ui_helper::print_message(&format!("Bot moved: {}.", bot_move.to_string())[..]);
+                let (bot_move, think_time) = self.chess.search();
+                ui_helper::print_message(&format!("Bot moved: {}, in {} seconds.", bot_move.to_string(), think_time.as_secs_f64())[..]);
 
                 self.chess.make_move(bot_move)
             };

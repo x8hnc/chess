@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use crate::{
     board::{
         board::Board,
@@ -31,7 +33,22 @@ impl Chess {
         }
     }
 
-    pub fn search(&mut self) -> Move {
+    pub fn _from_fen(fen: &str) -> Result<Self, String> {
+        let position = Position::_from_fen(fen)?;
+
+        let mut thread_tt = Vec::with_capacity(Self::SEARCH_THREADS);
+        for _ in 0..Self::SEARCH_THREADS {
+            thread_tt.push(TranspositionTable::new(Self::TT_CAPACITY));
+        }
+
+        Ok(Self {
+            position,
+            thread_tt,
+        })
+    }
+
+    pub fn search(&mut self) -> (Move, Duration) {
+        let now = Instant::now();
         let legal_moves = self.position.find_legal_moves();
 
         let chunk_size = legal_moves.len().div_ceil(Self::SEARCH_THREADS);
@@ -89,7 +106,7 @@ impl Chess {
 
         self.thread_tt = tables;
 
-        best_move
+        (best_move, now.elapsed())
     }
 
     fn negamax(
@@ -110,30 +127,47 @@ impl Chess {
         }
 
         let alpha_orig = alpha;
+        let beta_orig = beta;
         let mut best = isize::MIN;
         let position_hash = position.hash();
 
-        let mut legal_moves = position.find_legal_moves();
-        if transposition_table.contains(position_hash) {
-            let entry = transposition_table.get(position_hash);
+        let legal_moves = position.find_legal_moves();
+        if let Some(entry) = transposition_table.get(position_hash) {
             if entry.depth() >= depth {
+                transposition_table.stats_mut().usable += 1;
                 match entry.bound() {
-                    Bound::Exact => return entry.score(),
+                    Bound::Exact => {
+                        transposition_table.stats_mut().exact_cutoffs += 1;
+                        return entry.score();
+                    }
 
-                    Bound::Lower => alpha = alpha.max(entry.score()),
+                    Bound::Lower => {
+                        alpha = alpha.max(entry.score());
 
-                    Bound::Upper => beta = beta.min(entry.score()),
+                        if alpha >= beta {
+                            transposition_table.stats_mut().lower_bound_hit += 1;
+                            return entry.score();
+                        }
+                    }
+
+                    Bound::Upper => {
+                        beta = beta.min(entry.score());
+
+                        if alpha >= beta {
+                            transposition_table.stats_mut().upper_bound_hit += 1;
+                            return entry.score();
+                        }
+                    }
                 }
 
                 if alpha >= beta {
                     return entry.score();
                 }
-            } else if let Some(idx) = legal_moves.iter().position(|&m| m == entry.best()) {
-                legal_moves.swap(0, idx);
+            } else {
+                transposition_table.stats_mut().insufficient_depth += 1;
             }
         }
 
-        let mut best_move = legal_moves[0];
         for m in legal_moves.into_iter() {
             position.save();
             position.make_move(m);
@@ -144,7 +178,6 @@ impl Chess {
 
             if best <= score {
                 best = score;
-                best_move = m;
             }
             alpha = alpha.max(score);
 
@@ -155,19 +188,18 @@ impl Chess {
 
         let bound = if best <= alpha_orig {
             Bound::Upper
-        } else if best >= beta {
+        } else if best >= beta_orig {
             Bound::Lower
         } else {
             Bound::Exact
         };
 
-        transposition_table.insert(TTEntry::new(position_hash, depth, best, best_move, bound));
+        transposition_table.insert(TTEntry::new(position_hash, depth, best, bound));
         best
     }
 
-    pub fn bot_move(&mut self) -> MoveResult {
-        let movement = self.search();
-        self.make_move(movement)
+    pub fn is_in_check(&self) -> bool {
+        self.position.is_in_check()
     }
 
     pub fn make_move(&mut self, movement: Move) -> MoveResult {
@@ -212,5 +244,9 @@ impl Chess {
 
     pub fn board(&self) -> &Board {
         self.position.board()
+    }
+
+    pub fn thread_tt(&self) -> &[TranspositionTable] {
+        &self.thread_tt
     }
 }

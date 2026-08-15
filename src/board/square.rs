@@ -1,10 +1,9 @@
 use std::fmt::Display;
 use std::{cmp::Ordering, fmt};
 
-use crate::board::castle_rights::CastleRights;
 use crate::board::piece::{Color, Piece};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Square {
     row: i8,
     column: i8,
@@ -112,7 +111,7 @@ impl Display for Square {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Move {
     to: Square,
     from: Square,
@@ -224,35 +223,3 @@ pub enum MoveResult {
     Draw,
 }
 
-#[derive(Clone)]
-pub struct Undo {
-    pub movement: Move,
-    pub piece: Piece,
-    pub hash: u64,
-    pub captured_piece: Option<(Piece, Square)>,
-    pub white_castle_rights: CastleRights,
-    pub black_castle_rights: CastleRights,
-    pub en_passant: Option<Square>,
-}
-
-impl Undo {
-    pub fn new(
-        reverse_move: Move,
-        piece: Piece,
-        hash: u64,
-        captured_piece: Option<(Piece, Square)>,
-        white_castle_rights: CastleRights,
-        black_castle_rights: CastleRights,
-        en_passant: Option<Square>,
-    ) -> Self {
-        Self {
-            movement: reverse_move,
-            piece,
-            hash,
-            captured_piece,
-            white_castle_rights,
-            black_castle_rights,
-            en_passant,
-        }
-    }
-}

@@ -18,6 +18,19 @@ impl Position {
         }
     }
 
+    pub fn _from_fen(fen: &str) -> Result<Self, String> {
+        let board = Board::_from_fen(fen)?;
+
+        Ok(Self {
+            board,
+            undo_stack: Vec::new(),
+        })
+    }
+
+    pub fn is_in_check(&self) -> bool {
+        self.board.is_in_check()
+    }
+
     pub fn hash(&self) -> u64 {
         self.board.hash()
     }
@@ -31,8 +44,10 @@ impl Position {
     }
 
     fn is_endgame(&self) -> bool {
-        let white_endgame = !self.board.white_pieces().has_queen() || !self.board.white_pieces().has_minor_pieces();
-        let black_endgame = !self.board.black_pieces().has_queen() || !self.board.black_pieces().has_minor_pieces();
+        let white_endgame =
+            !self.board.white_pieces().has_queen() || !self.board.white_pieces().has_minor_pieces();
+        let black_endgame =
+            !self.board.black_pieces().has_queen() || !self.board.black_pieces().has_minor_pieces();
 
         white_endgame && black_endgame
     }
