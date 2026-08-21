@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::{
     board::{
         castle_rights::CastleRights,
@@ -892,18 +890,27 @@ impl Board {
     pub fn hash(&self) -> u64 {
         self.hash
     }
-}
 
-impl Display for Board {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    pub fn to_string(&self, white_on_bottom: bool) -> String {
         let mut ascii: String = String::new();
         let letters: [char; 8] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        let rows: Box<dyn Iterator<Item = i8>> = if white_on_bottom {
+            Box::new((Self::WHITE_PIECE_ROW..=Self::BLACK_PIECE_ROW).rev())
+        } else {
+            Box::new(Self::WHITE_PIECE_ROW..=Self::BLACK_PIECE_ROW)
+        };
 
-        for row in (Self::WHITE_PIECE_ROW..=Self::BLACK_PIECE_ROW).rev() {
+        for row in rows {
             ascii.push_str(&(row + 1).to_string());
             ascii.push(' ');
 
-            for column in 0..8 {
+            let columns: Box<dyn Iterator<Item = i8>> = if white_on_bottom {
+                Box::new(0..8)
+            } else {
+                Box::new((0..8).rev())
+            };
+
+            for column in columns {
                 let foreground_color;
                 let current_square = Square::new(row, column);
                 let mut square = if let Some(p) = self.white_pieces.get(current_square) {
@@ -930,13 +937,21 @@ impl Display for Board {
         }
         ascii.push_str("  ");
 
-        for letter in letters {
-            ascii.push(letter);
-            ascii.push(' ');
+        if white_on_bottom {
+            for letter in letters {
+                ascii.push(letter);
+                ascii.push(' ');
+            }
+        } else {
+            for letter in letters.into_iter().rev() {
+                ascii.push(letter);
+                ascii.push(' ');
+            }
         }
+
         ascii.push('\n');
 
-        write!(f, "{}", ascii)
+        ascii
     }
 }
 

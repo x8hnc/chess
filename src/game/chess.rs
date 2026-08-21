@@ -14,36 +14,40 @@ use crate::{
 pub struct Chess {
     position: Position,
     thread_tt: Vec<TranspositionTable>,
+    threads: usize,
+    depth: usize,
 }
 
 impl Chess {
-    const BOT_DEPTH: u8 = 5;
-    const SEARCH_THREADS: usize = 20;
     const TT_CAPACITY: usize = 24;
 
-    pub fn new() -> Self {
-        let mut thread_tt = Vec::with_capacity(Self::SEARCH_THREADS);
-        for _ in 0..Self::SEARCH_THREADS {
+    pub fn new(depth: usize, threads: usize) -> Self {
+        let mut thread_tt = Vec::with_capacity(threads);
+        for _ in 0..threads {
             thread_tt.push(TranspositionTable::new(Self::TT_CAPACITY));
         }
 
         Self {
             position: Position::new(),
             thread_tt,
+            threads,
+            depth,
         }
     }
 
-    pub fn _from_fen(fen: &str) -> Result<Self, String> {
+    pub fn _from_fen(fen: &str, depth: usize, threads: usize) -> Result<Self, String> {
         let position = Position::_from_fen(fen)?;
 
-        let mut thread_tt = Vec::with_capacity(Self::SEARCH_THREADS);
-        for _ in 0..Self::SEARCH_THREADS {
+        let mut thread_tt = Vec::with_capacity(threads);
+        for _ in 0..threads {
             thread_tt.push(TranspositionTable::new(Self::TT_CAPACITY));
         }
 
         Ok(Self {
             position,
             thread_tt,
+            threads,
+            depth,
         })
     }
 
@@ -51,10 +55,11 @@ impl Chess {
         let now = Instant::now();
         let legal_moves = self.position.find_legal_moves();
 
-        let chunk_size = legal_moves.len().div_ceil(Self::SEARCH_THREADS);
+        let chunk_size = legal_moves.len().div_ceil(self.threads);
 
         let mut handles = Vec::new();
         let mut tables = std::mem::take(&mut self.thread_tt);
+        let depth = self.depth;
 
         for (thread_id, chunk) in legal_moves.chunks(chunk_size).enumerate() {
             let moves = chunk.to_vec();
@@ -72,7 +77,7 @@ impl Chess {
 
                     let eval = -Self::negamax(
                         &mut position,
-                        Self::BOT_DEPTH - 1,
+                        depth - 1,
                         isize::MIN + 1,
                         isize::MAX,
                         &mut tt,
@@ -111,7 +116,7 @@ impl Chess {
 
     fn negamax(
         position: &mut Position,
-        depth: u8,
+        depth: usize,
         mut alpha: isize,
         mut beta: isize,
         transposition_table: &mut TranspositionTable,
@@ -133,7 +138,7 @@ impl Chess {
 
         let legal_moves = position.find_legal_moves();
         if let Some(entry) = transposition_table.get(position_hash) {
-            if entry.depth() >= depth {
+            if entry.depth() as usize >= depth {
                 transposition_table.stats_mut().usable += 1;
                 match entry.bound() {
                     Bound::Exact => {
@@ -194,7 +199,7 @@ impl Chess {
             Bound::Exact
         };
 
-        transposition_table.insert(TTEntry::new(position_hash, depth, best, bound));
+        transposition_table.insert(TTEntry::new(position_hash, depth as u8, best, bound));
         best
     }
 

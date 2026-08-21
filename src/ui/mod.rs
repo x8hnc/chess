@@ -8,37 +8,41 @@ mod ui_helper;
 
 pub struct Ui {
     chess: Chess,
+    white_on_bottom: bool,
+    play_white: bool,
 }
 
 impl Ui {
-    pub fn new() -> Self {
+    pub fn new(depth: usize, threads: usize, white_on_bottom: bool, play_white: bool) -> Self {
         Self {
-            chess: Chess::new(),
+            chess: Chess::new(depth, threads),
+            white_on_bottom,
+            play_white,
         }
     }
 
-    pub fn start(mut self, play_first: bool) {
+    pub fn start(mut self) {
         let console = std::io::stdin();
         let mut user_input = String::new();
 
         ui_helper::clear_screen();
         ui_helper::print_current_turn(self.chess.board().turn());
 
-        let mut bot_move = !play_first;
+        let mut bot_move = !self.play_white;
 
         loop {
-            ui_helper::print_board(&self.chess.board().to_string(), bot_move);
+            ui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
             let move_result = if !bot_move {
                 user_input.clear();
                 console.read_line(&mut user_input).unwrap();
                 user_input = String::from(user_input.trim());
 
                 if user_input.to_ascii_lowercase() == "draw" {
-                    ui_helper::print_board(&self.chess.board().to_string(), bot_move);
+                    ui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
                     ui_helper::print_message("Draw.");
                     break;
                 } else if user_input.to_ascii_lowercase() == "resign" {
-                    ui_helper::print_board(&self.chess.board().to_string(), bot_move);
+                    ui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
                     ui_helper::print_message(&format!("{} won.", !self.chess.board().turn()));
                     break;
                 }
@@ -72,7 +76,7 @@ impl Ui {
                     break;
                 }
                 MoveResult::CheckMate(color) => {
-                    ui_helper::print_board(&self.chess.board().to_string(), bot_move);
+                    ui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
                     ui_helper::print_message(&format!("{} won.", color));
                     break;
                 }
