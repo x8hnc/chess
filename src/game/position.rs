@@ -29,6 +29,13 @@ impl Position {
         }
     }
 
+    pub fn _from_fen(fen: &str) -> Result<Self, String> {
+        Ok(Self {
+            board: Board::_from_fen(fen)?,
+            undo_stack: vec![],
+        })
+    }
+
     pub fn turn(&self) -> Color {
         self.board.turn()
     }

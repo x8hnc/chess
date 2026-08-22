@@ -1,17 +1,5 @@
 pub struct TranspositionTable {
-    stats: TTStats,
     entries: Vec<TTEntry>,
-}
-
-#[derive(Default, Debug, Clone, Copy)]
-pub struct TTStats {
-    pub probes: u64,
-    pub hits: u64,
-    pub insufficient_depth: u64,
-    pub usable: u64,
-    pub exact_cutoffs: u64,
-    pub lower_bound_hit: u64,
-    pub upper_bound_hit: u64,
 }
 
 #[derive(Copy, Clone, Default)]
@@ -57,7 +45,6 @@ impl TranspositionTable {
     pub fn new(size: usize) -> Self {
         Self {
             entries: vec![TTEntry::default(); 1 << size],
-            stats: TTStats::default(),
         }
     }
 
@@ -75,17 +62,10 @@ impl TranspositionTable {
         let index = self.hash_to_index(hash);
         let existing = self.entries[index];
 
-        self.stats.probes += 1;
-
         if existing.hash != hash {
             return None;
         }
 
-        self.stats.hits += 1;
         Some(existing)
-    }
-
-    pub fn stats_mut(&mut self) -> &mut TTStats {
-        &mut self.stats
     }
 }

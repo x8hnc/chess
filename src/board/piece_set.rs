@@ -55,6 +55,18 @@ impl PieceSet {
         }
     }
 
+    pub fn _empty() -> Self {
+        Self {
+            pawns: 0,
+            rooks: 0,
+            knights: 0,
+            bishops: 0,
+            queens: 0,
+            king: 0,
+            en_passant: 0,
+        }
+    }
+
     pub fn is_occupied(&self, square: Square) -> bool {
         let square = square.to_bitmap();
 

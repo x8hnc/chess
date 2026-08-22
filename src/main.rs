@@ -10,18 +10,15 @@ mod web;
 // TODO: implement draw by repetition
 // TODO: implement draw by insufficient material
 // TODO: implement draw by 50 move rule
-// TODO: implement playing black for web ui
 // TODO: implement black on the bottom for web ui
-// TODO: implement move ordering for better alpha beta pruning
-// TODO: implement promotion for web ui
 
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut play_white = true;
     let mut threads_next = false;
     let mut depth_next = false;
-    let mut threads = 10;
-    let mut depth = 5;
+    let mut threads = 20;
+    let mut depth = 6;
     let mut seen = HashSet::new();
     let mut force_white_bottom = false;
     let mut run_tui = false;
@@ -70,7 +67,8 @@ fn main() -> Result<(), ()> {
     }
     let white_on_bottom = play_white || force_white_bottom;
     if run_tui {
-        Tui::new(depth, threads, white_on_bottom, play_white).start();
+        // Tui::new(depth, threads, white_on_bottom, play_white).start();
+        Tui::_from_fen("8/3r4/4r3/8/8/8/5k2/6nK w - - 0 1", depth, threads, white_on_bottom, play_white).unwrap().start();
     } else {
         WebUI::new(
             "127.0.0.1:7878",

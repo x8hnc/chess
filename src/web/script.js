@@ -1,40 +1,97 @@
 const board = document.getElementById("board");
 const statusMessage = document.getElementById("status");
+const promotionMenu = document.getElementById("promotion");
 
 let position = [];
-let selectedRow;
-let selectedCol;
+let selectedSquare = null;
+let turn = null;
+let choosingPromotion = false;
 
 const unicodePieces = {
-    "K": "♚",
-    "Q": "♛",
-    "R": "♜",
-    "B": "♝",
-    "N": "♞",
-    "P": "♟",
-
-    "k": "♚",
-    "q": "♛",
-    "r": "♜",
-    "b": "♝",
-    "n": "♞",
-    "p": "♟"
+    K: "♚",
+    Q: "♛",
+    R: "♜",
+    B: "♝",
+    N: "♞",
+    P: "♟",
+    k: "♚",
+    q: "♛",
+    r: "♜",
+    b: "♝",
+    n: "♞",
+    p: "♟"
 };
+
 
 function showStatus(message) {
     statusMessage.textContent = message;
 }
 
-async function sendBotMove() {
-    const response = await fetch("/bot_move", {
-        method: "POST"
-    });
+function clearSelection() {
+    selectedSquare = null;
+}
 
-    if (!response.ok) {
-        throw new Error(`Failed to make bot move: ${response.status}`);
+function drawBoard() {
+    board.innerHTML = "";
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = createSquare(row, col);
+            board.appendChild(square);
+        }
+    }
+}
+
+function createSquare(row, col) {
+    const square = document.createElement("div");
+
+    square.classList.add("square");
+
+    if ((row + col) % 2 === 0) {
+        square.classList.add("light");
+    } else {
+        square.classList.add("dark");
     }
 
-    return (await response.text()).trim();
+    const piece = position[row][col];
+
+    if (piece !== "") {
+        square.textContent = unicodePieces[piece] || piece;
+
+        square.classList.add(
+            piece === piece.toUpperCase()
+                ? "white-piece"
+                : "black-piece"
+        );
+    }
+
+    if (
+        selectedSquare &&
+        selectedSquare.row === row &&
+        selectedSquare.col === col
+    ) {
+        square.classList.add("selected");
+    }
+
+    square.addEventListener("click", () => {
+        handleSquareClick(row, col);
+    });
+
+    return square;
+}
+
+function toUci(row, col) {
+    const file = String.fromCharCode("a".charCodeAt(0) + col);
+    const rank = 8 - row;
+
+    return file + rank;
+}
+
+function uciToPosition(square) {
+    const col = square.charCodeAt(0) - "a".charCodeAt(0);
+    const row = 8 - parseInt(square[1]);
+
+    return { row, col };
 }
 
 async function getBoard() {
@@ -58,18 +115,18 @@ async function getBoard() {
     }
 }
 
-function toUci(row, col) {
-    const file = String.fromCharCode("a".charCodeAt(0) + col);
-    const rank = 8 - row;
+async function getTurn() {
+    const response = await fetch("/turn");
 
-    return file + rank;
-}
+    if (!response.ok) {
+        throw new Error(`Failed to get turn: ${response.status}`);
+    }
 
-function uciToPosition(square) {
-    const col = square.charCodeAt(0) - "a".charCodeAt(0);
-    const row = 8 - parseInt(square[1]);
+    turn = (await response.text()).trim();
 
-    return { row, col };
+    if (turn !== "player" && turn !== "bot") {
+        throw new Error(`Invalid turn received from server: ${turn}`);
+    }
 }
 
 async function sendMove(move) {
@@ -84,182 +141,212 @@ async function sendMove(move) {
     return (await response.text()).trim();
 }
 
-function drawBoard() {
-    board.innerHTML = "";
+async function sendBotMove() {
+    const response = await fetch("/bot_move", {
+        method: "POST"
+    });
 
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const square = document.createElement("div");
-            square.classList.add("square");
+    if (!response.ok) {
+        throw new Error(`Failed to make bot move: ${response.status}`);
+    }
 
-            if ((row + col) % 2 === 0) {
-                square.classList.add("light");
-            } else {
-                square.classList.add("dark");
-            }
+    return (await response.text()).trim();
+}
 
-            const piece = position[row][col];
+async function resetServerGame() {
+    const response = await fetch("/reset", {
+        method: "POST"
+    });
 
-            if (piece !== "") {
-                square.textContent = unicodePieces[piece] || piece;
-
-                square.classList.add(
-                    piece === piece.toUpperCase()
-                        ? "white-piece"
-                        : "black-piece"
-                );
-            }
-
-            if (selectedRow === row && selectedCol === col) {
-                square.classList.add("selected");
-            }
-
-            square.addEventListener("click", async function() {
-                if (selectedRow === undefined) {
-                    if (position[row][col] === "") {
-                        return;
-                    }
-
-                    selectedRow = row;
-                    selectedCol = col;
-
-                    drawBoard();
-                    return;
-                }
-
-                if (selectedRow === row && selectedCol === col) {
-                    selectedRow = undefined;
-                    selectedCol = undefined;
-
-                    drawBoard();
-                    return;
-                }
-
-                const from = toUci(selectedRow, selectedCol);
-                const to = toUci(row, col);
-                const move = from + to;
-
-                try {
-                    const result = await sendMove(move);
-
-                    if (
-                        result === "Ok" ||
-                        result === "Checkmate" ||
-                        result === "Draw"
-                    ) {
-
-                        selectedRow = undefined;
-                        selectedCol = undefined;
-
-                        await getBoard();
-                        drawBoard();
-
-                        if (result === "Checkmate") {
-                            showStatus("Checkmate!");
-                        } else if (result === "Draw") {
-                            showStatus("Draw!");
-                        } else {
-                            showStatus("Bot is thinking...");
-
-                            try {
-                                const botResult = await sendBotMove();
-
-                                await getBoard();
-                                drawBoard();
-
-                                if (botResult === "Checkmate") {
-                                    showStatus("Checkmate!");
-                                } else if (botResult === "Draw") {
-                                    showStatus("Draw!");
-                                } else if (botResult === "Ok") {
-                                    showStatus("");
-                                } else {
-                                    console.error("Unknown bot response:", botResult);
-                                    showStatus("");
-                                }
-                            } catch (error) {
-                                console.error("Failed to make bot move:", error);
-                                showStatus("Failed to make bot move.");
-                            }
-                        }
-                    }
-
-                    else if (result === "Illegal") {
-                        showStatus("Illegal move.");
-
-                        selectedRow = undefined;
-                        selectedCol = undefined;
-
-                        drawBoard();
-                    }
-
-                    else {
-                        console.error("Unknown server response:", result);
-
-                        showStatus("");
-
-                        selectedRow = undefined;
-                        selectedCol = undefined;
-
-                        await getBoard();
-                        drawBoard();
-                    }
-                } catch (error) {
-                    console.error("Failed to send move:", error);
-
-                    selectedRow = undefined;
-                    selectedCol = undefined;
-
-                    try {
-                        await getBoard();
-                        drawBoard();
-                    } catch (boardError) {
-                        console.error("Failed to get board:", boardError);
-                    }
-                }
-            });
-
-            board.appendChild(square);
-        }
+    if (!response.ok) {
+        throw new Error(`Failed to reset game: ${response.status}`);
     }
 }
 
-async function init() {
-    try {
-        await getBoard();
-        drawBoard();
-    } catch (error) {
-        console.error("Failed to initialize board:", error);
+function choosePromotion() {
+    choosingPromotion = true;
+    promotionMenu.classList.remove("hidden");
+
+    return new Promise(resolve => {
+        const buttons = promotionMenu.querySelectorAll("button");
+
+        buttons.forEach(button => {
+            button.onclick = () => {
+                choosingPromotion = false;
+                promotionMenu.classList.add("hidden");
+
+                resolve(button.dataset.piece);
+            };
+        });
+    });
+}
+
+async function handleSquareClick(row, col) {
+    if (turn !== "player" || choosingPromotion) {
+        return;
     }
+
+    if (!selectedSquare) {
+        selectSquare(row, col);
+        return;
+    }
+
+    if (
+        selectedSquare.row === row &&
+        selectedSquare.col === col
+    ) {
+        clearSelection();
+        drawBoard();
+        return;
+    }
+
+    await attemptMove(row, col);
+}
+
+function selectSquare(row, col) {
+    if (position[row][col] === "") {
+        return;
+    }
+
+    selectedSquare = { row, col };
+    drawBoard();
+}
+
+async function attemptMove(row, col) {
+    const from = toUci(selectedSquare.row, selectedSquare.col);
+    const to = toUci(row, col);
+
+    const piece = position[selectedSquare.row][selectedSquare.col];
+
+    let move = from + to;
+
+    const isPromotion =
+        piece.toLowerCase() === "p" &&
+        (row === 0 || row === 7);
+
+    if (isPromotion) {
+        const promotionPiece = await choosePromotion();
+        move += promotionPiece;
+    }
+
+    await playMove(move);
+}
+
+async function playMove(move) {
+    try {
+        const result = await sendMove(move);
+
+        clearSelection();
+
+        if (result === "Illegal") {
+            showStatus("Illegal move.");
+            drawBoard();
+            return;
+        }
+
+        if (
+            result !== "Ok" &&
+            result !== "Checkmate" &&
+            result !== "Draw"
+        ) {
+            console.error("Unknown server response:", result);
+            showStatus("");
+            await refreshBoard();
+            return;
+        }
+
+        await refreshBoard();
+
+        if (result === "Checkmate") {
+            showStatus("Checkmate!");
+            return;
+        }
+
+        if (result === "Draw") {
+            showStatus("Draw!");
+            return;
+        }
+
+        await handleTurn();
+    } catch (error) {
+        console.error("Failed to send move:", error);
+    }
+}
+
+async function handleTurn() {
+    await getTurn();
+
+    if (turn === "bot") {
+        await playBotMove();
+    }
+}
+
+async function playBotMove() {
+    showStatus("Bot is thinking...");
+
+    try {
+        const result = await sendBotMove();
+
+        await refreshBoard();
+
+        if (result === "Checkmate") {
+            showStatus("Checkmate!");
+            return;
+        }
+
+        if (result === "Draw") {
+            showStatus("Draw!");
+            return;
+        }
+
+        if (result !== "Ok") {
+            console.error("Unknown bot response:", result);
+            return;
+        }
+        
+        showStatus("");
+        await handleTurn();
+    } catch (error) {
+        console.error("Failed to make bot move:", error);
+        showStatus("Failed to make bot move.");
+    }
+}
+
+async function refreshBoard() {
+    await getBoard();
+    drawBoard();
 }
 
 async function resetGame() {
     try {
-        const response = await fetch("/reset", {
-            method: "POST"
-        });
+        await resetServerGame();
 
-        if (!response.ok) {
-            throw new Error(`Failed to reset game: ${response.status}`);
-        }
-
-        selectedRow = undefined;
-        selectedCol = undefined;
-
-        await getBoard();
-        drawBoard();
-
+        clearSelection();
         showStatus("");
+
+        await refreshBoard();
+        await handleTurn();
     } catch (error) {
         console.error("Failed to reset game:", error);
         showStatus("Failed to reset game.");
     }
 }
 
-document.addEventListener("keydown", function(event) {
+async function init() {
+    try {
+        await refreshBoard();
+        await handleTurn();
+    } catch (error) {
+        console.error("Failed to initialize board:", error);
+        showStatus("Failed to load game.");
+    }
+}
+
+document.addEventListener("keydown", event => {
     if (event.key.toLowerCase() === "r") {
         resetGame();
     }
 });
+
 
 init();

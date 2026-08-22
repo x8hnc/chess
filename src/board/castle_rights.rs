@@ -14,6 +14,14 @@ impl CastleRights {
         }
     }
 
+    pub fn _none() -> Self {
+        Self {
+            king_moved: true,
+            right_rook_moved: false,
+            left_rook_moved: false,
+        }
+    }
+
     pub fn king_moved(&mut self) {
         self.king_moved = true;
     }

@@ -7,6 +7,26 @@ body {
     height: 100vh;
 }
 
+#promotion {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-direction: column;
+}
+
+#promotion.hidden {
+    display: none;
+}
+
+#promotion button {
+    width: 60px;
+    height: 60px;
+
+    font-size: 40px;
+    font-family: "DejaVu Sans", "Segoe UI Symbol", sans-serif;
+
+    cursor: pointer;
+}
 #game {
     display: flex;
     flex-direction: column;

@@ -76,12 +76,145 @@ impl Board {
         }
     }
 
+    pub fn _from_fen(fen: &str) -> Result<Self, String> {
+        let parts: Vec<&str> = fen.split_whitespace().collect();
+
+        if parts.len() != 6 {
+            return Err("Invalid FEN".into());
+        }
+
+        let mut board = Self {
+            white_pieces: PieceSet::_empty(),
+            black_pieces: PieceSet::_empty(),
+            turn: Color::White,
+            white_castle_rights: CastleRights::_none(),
+            black_castle_rights: CastleRights::_none(),
+            hash: 0,
+            zobrist: Zobrist::new(),
+            moves: vec![],
+        };
+
+        //
+        // Piece placement
+        //
+        let mut row = 7;
+        let mut col = 0;
+
+        for ch in parts[0].chars() {
+            match ch {
+                '/' => {
+                    if col != 8 {
+                        return Err("Invalid FEN board".into());
+                    }
+
+                    row -= 1;
+                    col = 0;
+                }
+
+                '1'..='8' => {
+                    col += ch.to_digit(10).unwrap() as usize;
+                }
+
+                _ => {
+                    let (piece_set, piece) = match ch {
+                        'P' => (&mut board.white_pieces, Piece::Pawn),
+                        'N' => (&mut board.white_pieces, Piece::Knight),
+                        'B' => (&mut board.white_pieces, Piece::Bishop),
+                        'R' => (&mut board.white_pieces, Piece::Rook),
+                        'Q' => (&mut board.white_pieces, Piece::Queen),
+                        'K' => (&mut board.white_pieces, Piece::King),
+
+                        'p' => (&mut board.black_pieces, Piece::Pawn),
+                        'n' => (&mut board.black_pieces, Piece::Knight),
+                        'b' => (&mut board.black_pieces, Piece::Bishop),
+                        'r' => (&mut board.black_pieces, Piece::Rook),
+                        'q' => (&mut board.black_pieces, Piece::Queen),
+                        'k' => (&mut board.black_pieces, Piece::King),
+
+                        _ => return Err(format!("Invalid piece '{}'", ch)),
+                    };
+
+                    if col >= 8 {
+                        return Err("Invalid FEN board".into());
+                    }
+
+                    piece_set.add_piece(Square::new(row, col as i8), piece);
+                    col += 1;
+                }
+            }
+        }
+
+        //
+        // Side to move
+        //
+        board.turn = match parts[1] {
+            "w" => Color::White,
+            "b" => Color::Black,
+            _ => return Err("Invalid side to move".into()),
+        };
+
+        //
+        // Castling rights
+        //
+        let mut white = CastleRights::_none();
+        let mut black = CastleRights::_none();
+
+        if parts[2] != "-" {
+            white = CastleRights::new();
+            black = CastleRights::new();
+
+            if !parts[2].contains('K') {
+                white.right_rook_moved();
+            }
+
+            if !parts[2].contains('Q') {
+                white.left_rook_moved();
+            }
+
+            if !parts[2].contains('k') {
+                black.right_rook_moved();
+            }
+
+            if !parts[2].contains('q') {
+                black.left_rook_moved();
+            }
+        }
+
+        board.white_castle_rights = white;
+        board.black_castle_rights = black;
+
+        //
+        // En passant
+        //
+        if parts[3] != "-" {
+            let bytes = parts[3].as_bytes();
+
+            if bytes.len() != 2 {
+                return Err("Invalid en passant square".into());
+            }
+
+            let file = (bytes[0] - b'a') as usize;
+            let rank = (bytes[1] - b'1') as usize;
+
+            let pos = Square::new(rank as i8, file as i8);
+
+            match board.turn {
+                Color::White => board.black_pieces.set_en_passant(pos),
+                Color::Black => board.white_pieces.set_en_passant(pos),
+            }
+        }
+
+        // Halfmove clock (parts[4]) and fullmove number (parts[5])
+        // are ignored since your Board doesn't store them.
+
+        Ok(board)
+    }
     pub fn is_attack(&self, movement: Move) -> bool {
         let enemy_pieces = match self.turn {
             Color::White => &self.black_pieces,
             Color::Black => &self.white_pieces,
         };
-        
+
         enemy_pieces.is_occupied(movement.to())
     }
 
