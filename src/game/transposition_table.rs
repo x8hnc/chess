@@ -93,8 +93,4 @@ impl TranspositionTable {
     pub fn stats_mut(&mut self) -> &mut TTStats {
         &mut self.stats
     }
-
-    pub fn stats(&self) -> TTStats {
-        self.stats
-    }
 }

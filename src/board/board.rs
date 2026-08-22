@@ -6,7 +6,7 @@ use crate::{
         square::{Move, MoveResult, Square},
     },
     game::zobrist::Zobrist,
-    ui::terminal,
+    tui::terminal,
 };
 
 struct MoveContext<'a> {

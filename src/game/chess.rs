@@ -203,10 +203,6 @@ impl Chess {
         best
     }
 
-    pub fn is_in_check(&self) -> bool {
-        self.position.is_in_check()
-    }
-
     pub fn make_move(&mut self, movement: Move) -> MoveResult {
         let result = self.position.make_move(movement);
         if result == MoveResult::Illegal {
@@ -249,9 +245,5 @@ impl Chess {
 
     pub fn board(&self) -> &Board {
         self.position.board()
-    }
-
-    pub fn thread_tt(&self) -> &[TranspositionTable] {
-        &self.thread_tt
     }
 }

@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use crate::ui::Ui;
+use crate::tui::TUI;
 
 mod board;
 mod game;
-mod ui;
+mod tui;
 
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -59,6 +59,6 @@ fn main() -> Result<(), ()> {
     }
     let white_on_bottom = play_white || force_white_bottom;
 
-    Ui::new(depth, threads, white_on_bottom, play_white).start();
+    TUI::new(depth, threads, white_on_bottom, play_white).start();
     Ok(())
 }

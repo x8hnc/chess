@@ -1,5 +1,5 @@
 use crate::{
-    board::piece::Color, ui::terminal::{self, BLACK_FOREGROUND, END_COLOR, WHITE_FOREGROUND}
+    board::piece::Color, tui::terminal::{self, BLACK_FOREGROUND, END_COLOR, WHITE_FOREGROUND}
 };
 
 const CURRENT_TURN_LINE: usize = 0;

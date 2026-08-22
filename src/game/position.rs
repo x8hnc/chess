@@ -27,10 +27,6 @@ impl Position {
         })
     }
 
-    pub fn is_in_check(&self) -> bool {
-        self.board.is_in_check()
-    }
-
     pub fn hash(&self) -> u64 {
         self.board.hash()
     }
