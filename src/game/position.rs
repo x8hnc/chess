@@ -18,6 +18,17 @@ impl Position {
         }
     }
 
+    pub fn order_moves(&self, moves: &mut Vec<Move>) {
+        let mut i = 0;
+
+        for j in 0..moves.len() {
+            if self.board.is_attack(moves[j]) {
+                moves.swap(i, j);
+                i += 1;
+            }
+        }
+    }
+
     pub fn turn(&self) -> Color {
         self.board.turn()
     }

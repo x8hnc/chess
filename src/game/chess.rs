@@ -42,6 +42,7 @@ impl Chess {
         self.position.turn()
     }
 
+
     pub fn search(&mut self) -> (Move, Duration) {
         let now = Instant::now();
         let legal_moves = self.position.find_legal_moves();
@@ -53,8 +54,10 @@ impl Chess {
         let depth = self.depth;
 
         for (thread_id, chunk) in legal_moves.chunks(chunk_size).enumerate() {
-            let moves = chunk.to_vec();
+            let mut moves = chunk.to_vec();
             let mut position = self.position.clone();
+
+            self.position.order_moves(&mut moves);
 
             let mut tt = std::mem::replace(&mut tables[thread_id], TranspositionTable::new(0));
 
@@ -113,7 +116,7 @@ impl Chess {
         transposition_table: &mut TranspositionTable,
     ) -> isize {
         if position.is_checkmate() {
-            return -isize::MAX;
+            return -300000;
         } else if position.is_stalemate() {
             return 0;
         }
@@ -127,7 +130,8 @@ impl Chess {
         let mut best = isize::MIN;
         let position_hash = position.hash();
 
-        let legal_moves = position.find_legal_moves();
+        let mut legal_moves = position.find_legal_moves();
+        position.order_moves(&mut legal_moves); 
         if let Some(entry) = transposition_table.get(position_hash) {
             if entry.depth() as usize >= depth {
                 transposition_table.stats_mut().usable += 1;

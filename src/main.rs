@@ -13,6 +13,7 @@ mod web;
 // TODO: implement playing black for web ui
 // TODO: implement black on the bottom for web ui
 // TODO: implement move ordering for better alpha beta pruning
+// TODO: implement promotion for web ui
 
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().skip(1).collect();

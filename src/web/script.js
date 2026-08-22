@@ -147,6 +147,7 @@ function drawBoard() {
                         result === "Checkmate" ||
                         result === "Draw"
                     ) {
+
                         selectedRow = undefined;
                         selectedCol = undefined;
 
@@ -158,30 +159,28 @@ function drawBoard() {
                         } else if (result === "Draw") {
                             showStatus("Draw!");
                         } else {
-                            showStatus("");
-                        }
+                            showStatus("Bot is thinking...");
 
-                        showStatus("Bot is thinking...");
+                            try {
+                                const botResult = await sendBotMove();
 
-                        try {
-                            const botResult = await sendBotMove();
+                                await getBoard();
+                                drawBoard();
 
-                            await getBoard();
-                            drawBoard();
-
-                            if (botResult === "Checkmate") {
-                                showStatus("Checkmate!");
-                            } else if (botResult === "Draw") {
-                                showStatus("Draw!");
-                            } else if (botResult === "Ok") {
-                                showStatus("");
-                            } else {
-                                console.error("Unknown bot response:", botResult);
-                                showStatus("");
+                                if (botResult === "Checkmate") {
+                                    showStatus("Checkmate!");
+                                } else if (botResult === "Draw") {
+                                    showStatus("Draw!");
+                                } else if (botResult === "Ok") {
+                                    showStatus("");
+                                } else {
+                                    console.error("Unknown bot response:", botResult);
+                                    showStatus("");
+                                }
+                            } catch (error) {
+                                console.error("Failed to make bot move:", error);
+                                showStatus("Failed to make bot move.");
                             }
-                        } catch (error) {
-                            console.error("Failed to make bot move:", error);
-                            showStatus("Failed to make bot move.");
                         }
                     }
 

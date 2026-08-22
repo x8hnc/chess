@@ -76,6 +76,15 @@ impl Board {
         }
     }
 
+    pub fn is_attack(&self, movement: Move) -> bool {
+        let enemy_pieces = match self.turn {
+            Color::White => &self.black_pieces,
+            Color::Black => &self.white_pieces,
+        };
+        
+        enemy_pieces.is_occupied(movement.to())
+    }
+
     fn move_context<'a>(&'a mut self) -> MoveContext<'a> {
         match self.turn {
             Color::White => MoveContext {
