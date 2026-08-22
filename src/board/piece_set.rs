@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::board::{
-    board::Board,
+    Board,
     piece::{Color, Piece},
     square::Square,
 };

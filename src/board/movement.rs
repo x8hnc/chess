@@ -109,10 +109,10 @@ pub enum MoveResult {
 impl Display for MoveResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            MoveResult::Ok => write!(f, "{}", "Ok"),
-            MoveResult::Illegal => write!(f, "{}", "Illegal"),
-            MoveResult::CheckMate => write!(f, "{}", "Checkmate"),
-            MoveResult::Draw => write!(f, "{}", "Draw"),
+            MoveResult::Ok => write!(f, "Ok"),
+            MoveResult::Illegal => write!(f, "Illegal"),
+            MoveResult::CheckMate => write!(f, "Checkmate"),
+            MoveResult::Draw => write!(f, "Draw"),
         }
     }
 }

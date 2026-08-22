@@ -1,5 +1,5 @@
 use crate::board::{
-    board::Board,
+    Board,
     movement::{Move, MoveResult},
     piece::{Color, PIECE_TYPES, Piece},
 };
@@ -18,7 +18,7 @@ impl Position {
         }
     }
 
-    pub fn order_moves(&self, moves: &mut Vec<Move>) {
+    pub fn order_moves(&self, moves: &mut [Move]) {
         let mut i = 0;
 
         for j in 0..moves.len() {

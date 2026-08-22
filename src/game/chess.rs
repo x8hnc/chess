@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use crate::{
     board::{
-        board::Board,
+        Board,
         movement::{Move, MoveResult},
         piece::Color,
     },

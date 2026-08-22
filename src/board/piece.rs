@@ -181,7 +181,7 @@ impl Piece {
         }
     }
 
-    pub fn to_net(&self) -> char {
+    pub fn to_net(self) -> char {
         match self {
             Piece::Pawn => 'p',
             Piece::Knight => 'n',
