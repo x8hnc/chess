@@ -48,43 +48,43 @@ impl Display for Color {
 }
 
 impl PartialOrd for Piece {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self {
-            Piece::Pawn => match other {
-                Piece::Pawn => Some(Ordering::Equal),
-                _ => Some(Ordering::Less),
-            },
-            Piece::Rook => match other {
-                Piece::Rook => Some(Ordering::Equal),
-                Piece::Queen | Piece::King => Some(Ordering::Less),
-                _ => Some(Ordering::Greater),
-            },
-            Piece::Knight => match other {
-                Piece::Knight => Some(Ordering::Equal),
-                Piece::Pawn => Some(Ordering::Greater),
-                _ => Some(Ordering::Less),
-            },
-            Piece::Bishop => match other {
-                Piece::Bishop => Some(Ordering::Equal),
-                Piece::Pawn | Piece::Knight => Some(Ordering::Greater),
-                _ => Some(Ordering::Less),
-            },
-            Piece::Queen => match other {
-                Piece::Queen => Some(Ordering::Equal),
-                Piece::King => Some(Ordering::Less),
-                _ => Some(Ordering::Greater),
-            },
-            Piece::King => match other {
-                Piece::King => Some(Ordering::Equal),
-                _ => Some(Ordering::Greater),
-            },
-        }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Piece {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        match self {
+            Piece::Pawn => match other {
+                Piece::Pawn => Ordering::Equal,
+                _ => Ordering::Less,
+            },
+            Piece::Rook => match other {
+                Piece::Rook => Ordering::Equal,
+                Piece::Queen | Piece::King => Ordering::Less,
+                _ => Ordering::Greater,
+            },
+            Piece::Knight => match other {
+                Piece::Knight => Ordering::Equal,
+                Piece::Pawn => Ordering::Greater,
+                _ => Ordering::Less,
+            },
+            Piece::Bishop => match other {
+                Piece::Bishop => Ordering::Equal,
+                Piece::Pawn | Piece::Knight => Ordering::Greater,
+                _ => Ordering::Less,
+            },
+            Piece::Queen => match other {
+                Piece::Queen => Ordering::Equal,
+                Piece::King => Ordering::Less,
+                _ => Ordering::Greater,
+            },
+            Piece::King => match other {
+                Piece::King => Ordering::Equal,
+                _ => Ordering::Greater,
+            },
+        }
     }
 }
 
@@ -105,80 +105,47 @@ impl Display for Piece {
 
 impl Piece {
     const PAWN_TABLE: [isize; 64] = [
-         0,  0,  0,  0,  0,  0,  0,  0,
-         50, 50, 50, 50, 50, 50, 50, 50,
-         10, 10, 20, 30, 30, 20, 10, 10,
-         5,  5, 10, 25, 25, 10,  5,  5,
-         0,  0,  0, 20, 20,  0,  0,  0,
-         5, -5,-10,  0,  0,-10, -5,  5,
-         5, 10, 10,-20,-20, 10, 10,  5,
-         0,  0,  0,  0,  0,  0,  0,  0
+        0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5,
+        5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10,
+        -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
 
     const ROOK_TABLE: [isize; 64] = [
-        0,  0,  0,  0,  0,  0,  0,  0,
-        5, 10, 10, 10, 10, 10, 10,  5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        0,  0,  0,  5,  5,  0,  0,  0
+        0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0,
+        0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0,
+        -5, 0, 0, 0, 5, 5, 0, 0, 0,
     ];
 
     const KNIGHT_TABLE: [isize; 64] = [
-        -50,-40,-30,-30,-30,-30,-40,-50,
-        -40,-20,  0,  0,  0,  0,-20,-40,
-        -30,  0, 10, 15, 15, 10,  0,-30,
-        -30,  5, 15, 20, 20, 15,  5,-30,
-        -30,  0, 15, 20, 20, 15,  0,-30,
-        -30,  5, 10, 15, 15, 10,  5,-30,
-        -40,-20,  0,  5,  5,  0,-20,-40,
-        -50,-40,-30,-30,-30,-30,-40,-50,
+        -50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0, 0, 0, 0, -20, -40, -30, 0, 10, 15, 15,
+        10, 0, -30, -30, 5, 15, 20, 20, 15, 5, -30, -30, 0, 15, 20, 20, 15, 0, -30, -30, 5, 10, 15,
+        15, 10, 5, -30, -40, -20, 0, 5, 5, 0, -20, -40, -50, -40, -30, -30, -30, -30, -40, -50,
     ];
 
     const BISHOP_TABLE: [isize; 64] = [
-        -20,-10,-10,-10,-10,-10,-10,-20,
-        -10,  0,  0,  0,  0,  0,  0,-10,
-        -10,  0,  5, 10, 10,  5,  0,-10,
-        -10,  5,  5, 10, 10,  5,  5,-10,
-        -10,  0, 10, 10, 10, 10,  0,-10,
-        -10, 10, 10, 10, 10, 10, 10,-10,
-        -10,  5,  0,  0,  0,  0,  5,-10,
-        -20,-10,-10,-10,-10,-10,-10,-20,
+        -20, -10, -10, -10, -10, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 10, 10, 5,
+        0, -10, -10, 5, 5, 10, 10, 5, 5, -10, -10, 0, 10, 10, 10, 10, 0, -10, -10, 10, 10, 10, 10,
+        10, 10, -10, -10, 5, 0, 0, 0, 0, 5, -10, -20, -10, -10, -10, -10, -10, -10, -20,
     ];
 
     const KING_TABLE: [isize; 64] = [
-        -30,-40,-40,-50,-50,-40,-40,-30,
-        -30,-40,-40,-50,-50,-40,-40,-30,
-        -30,-40,-40,-50,-50,-40,-40,-30,
-        -30,-40,-40,-50,-50,-40,-40,-30,
-        -20,-30,-30,-40,-40,-30,-30,-20,
-        -10,-20,-20,-20,-20,-20,-20,-10,
-        20, 20,  0,  0,  0,  0, 20, 20,
-        20, 30, 10,  0,  0, 10, 30, 20
+        -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40,
+        -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40,
+        -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10, 20, 20, 0, 0, 0, 0, 20, 20, 20,
+        30, 10, 0, 0, 10, 30, 20,
     ];
 
     const KING_TABLE_ENDGAME: [isize; 64] = [
-        -50,-40,-30,-20,-20,-30,-40,-50,
-        -30,-20,-10,  0,  0,-10,-20,-30,
-        -30,-10, 20, 30, 30, 20,-10,-30,
-        -30,-10, 30, 40, 40, 30,-10,-30,
-        -30,-10, 30, 40, 40, 30,-10,-30,
-        -30,-10, 20, 30, 30, 20,-10,-30,
-        -30,-30,  0,  0,  0,  0,-30,-30,
-        -50,-30,-30,-30,-30,-30,-30,-50
+        -50, -40, -30, -20, -20, -30, -40, -50, -30, -20, -10, 0, 0, -10, -20, -30, -30, -10, 20,
+        30, 30, 20, -10, -30, -30, -10, 30, 40, 40, 30, -10, -30, -30, -10, 30, 40, 40, 30, -10,
+        -30, -30, -10, 20, 30, 30, 20, -10, -30, -30, -30, 0, 0, 0, 0, -30, -30, -50, -30, -30,
+        -30, -30, -30, -30, -50,
     ];
 
     const QUEEN_TABLE: [isize; 64] = [
-        -20,-10,-10, -5, -5,-10,-10,-20,
-        -10,  0,  0,  0,  0,  0,  0,-10,
-        -10,  0,  5,  5,  5,  5,  0,-10,
-        -5,  0,  5,  5,  5,  5,  0, -5,
-        0,  0,  5,  5,  5,  5,  0, -5,
-        -10,  5,  5,  5,  5,  5,  0,-10,
-        -10,  0,  5,  0,  0,  0,  0,-10,
-        -20,-10,-10, -5, -5,-10,-10,-20
+        -20, -10, -10, -5, -5, -10, -10, -20, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 5, 5, 5, 0,
+        -10, -5, 0, 5, 5, 5, 5, 0, -5, 0, 0, 5, 5, 5, 5, 0, -5, -10, 5, 5, 5, 5, 5, 0, -10, -10, 0,
+        5, 0, 0, 0, 0, -10, -20, -10, -10, -5, -5, -10, -10, -20,
     ];
 
     pub fn value(&self, square: Square, color: Color, endgame: bool) -> isize {
@@ -193,11 +160,17 @@ impl Piece {
             Piece::Knight => 320 + Self::KNIGHT_TABLE[square_index],
             Piece::Bishop => 330 + Self::BISHOP_TABLE[square_index],
             Piece::Queen => 900 + Self::QUEEN_TABLE[square_index],
-            Piece::King => { if endgame { Self::KING_TABLE_ENDGAME[square_index] } else { Self::KING_TABLE[square_index] }},
+            Piece::King => {
+                if endgame {
+                    Self::KING_TABLE_ENDGAME[square_index]
+                } else {
+                    Self::KING_TABLE[square_index]
+                }
+            }
         }
     }
 
-    pub fn to_index(&self) -> usize {
+    pub fn to_index(self) -> usize {
         match self {
             Piece::Pawn => 0,
             Piece::Rook => 1,
@@ -205,6 +178,17 @@ impl Piece {
             Piece::Bishop => 3,
             Piece::Queen => 4,
             Piece::King => 5,
+        }
+    }
+
+    pub fn to_net(&self) -> char {
+        match self {
+            Piece::Pawn => 'p',
+            Piece::Knight => 'n',
+            Piece::Bishop => 'b',
+            Piece::Rook => 'r',
+            Piece::Queen => 'q',
+            Piece::King => 'k',
         }
     }
 }

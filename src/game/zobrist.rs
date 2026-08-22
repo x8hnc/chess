@@ -48,8 +48,8 @@ impl Zobrist {
 
         let mut en_passant_hashes = [0; 8];
 
-        for f in 0..8 {
-            en_passant_hashes[f] = random.next_int();
+        for f in &mut en_passant_hashes {
+            *f = random.next_int();
         }
 
         let white_castle_left_hash = random.next_int();

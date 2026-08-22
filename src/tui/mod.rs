@@ -1,18 +1,17 @@
 use crate::{
-    board::square::{Move, MoveResult},
-    game::chess::Chess,
+    board::movement::{Move, MoveResult}, game::chess::Chess
 };
 
 pub mod terminal;
 mod tui_helper;
 
-pub struct TUI {
+pub struct Tui {
     chess: Chess,
     white_on_bottom: bool,
     play_white: bool,
 }
 
-impl TUI {
+impl Tui {
     pub fn new(depth: usize, threads: usize, white_on_bottom: bool, play_white: bool) -> Self {
         Self {
             chess: Chess::new(depth, threads),
@@ -37,11 +36,11 @@ impl TUI {
                 console.read_line(&mut user_input).unwrap();
                 user_input = String::from(user_input.trim());
 
-                if user_input.to_ascii_lowercase() == "draw" {
+                if user_input.eq_ignore_ascii_case("draw") {
                     tui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
                     tui_helper::print_message("Draw.");
                     break;
-                } else if user_input.to_ascii_lowercase() == "resign" {
+                } else if user_input.eq_ignore_ascii_case("resign") {
                     tui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
                     tui_helper::print_message(&format!("{} won.", !self.chess.board().turn()));
                     break;
@@ -55,7 +54,7 @@ impl TUI {
                 self.chess.make_move(movement)
             } else {
                 let (bot_move, think_time) = self.chess.search();
-                tui_helper::print_message(&format!("Bot moved: {}, in {} seconds.", bot_move.to_string(), think_time.as_secs_f64())[..]);
+                tui_helper::print_message(&format!("Bot moved: {}, in {} seconds.", bot_move, think_time.as_secs_f64())[..]);
 
                 self.chess.make_move(bot_move)
             };
@@ -75,9 +74,9 @@ impl TUI {
                     tui_helper::print_message("Draw.");
                     break;
                 }
-                MoveResult::CheckMate(color) => {
+                MoveResult::CheckMate => {
                     tui_helper::print_board(&self.chess.board().to_string(self.white_on_bottom), bot_move);
-                    tui_helper::print_message(&format!("{} won.", color));
+                    tui_helper::print_message(&format!("{} won.", self.chess.turn()));
                     break;
                 }
             }

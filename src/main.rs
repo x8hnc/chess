@@ -1,10 +1,18 @@
 use std::collections::HashSet;
 
-use crate::tui::TUI;
+use crate::{tui::Tui, web::WebUI};
 
 mod board;
 mod game;
 mod tui;
+mod web;
+
+// TODO: implement draw by repetition
+// TODO: implement draw by insufficient material
+// TODO: implement draw by 50 move rule
+// TODO: implement playing black for web ui
+// TODO: implement black on the bottom for web ui
+// TODO: implement move ordering for better alpha beta pruning
 
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -15,10 +23,11 @@ fn main() -> Result<(), ()> {
     let mut depth = 5;
     let mut seen = HashSet::new();
     let mut force_white_bottom = false;
+    let mut run_tui = false;
 
     for arg in args {
         if threads_next {
-            threads = match usize::from_str_radix(&arg, 10) {
+            threads = match arg.parse::<usize>() {
                 Ok(threads) => threads,
                 Err(_) => {
                     eprintln!("{} is not a number", arg);
@@ -28,7 +37,7 @@ fn main() -> Result<(), ()> {
             threads_next = false;
             continue;
         } else if depth_next {
-            depth = match usize::from_str_radix(&arg, 10) {
+            depth = match arg.parse::<usize>() {
                 Ok(threads) => threads,
                 Err(_) => {
                     eprintln!("{} is not a number", arg);
@@ -51,6 +60,7 @@ fn main() -> Result<(), ()> {
             "-t" => threads_next = true,
             "-d" => depth_next = true,
             "-f" => force_white_bottom = true,
+            "-h" => run_tui = true,
             _ => {
                 eprintln!("Unknown argument {}", arg);
                 return Err(());
@@ -58,7 +68,18 @@ fn main() -> Result<(), ()> {
         }
     }
     let white_on_bottom = play_white || force_white_bottom;
-
-    TUI::new(depth, threads, white_on_bottom, play_white).start();
+    if run_tui {
+        Tui::new(depth, threads, white_on_bottom, play_white).start();
+    } else {
+        WebUI::new(
+            "127.0.0.1:7878",
+            depth,
+            threads,
+            white_on_bottom,
+            play_white,
+        )
+        .unwrap()
+        .start();
+    }
     Ok(())
 }

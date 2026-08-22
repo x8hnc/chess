@@ -18,18 +18,6 @@ pub struct PieceSet {
 }
 
 impl PieceSet {
-    pub fn _empty() -> Self {
-        Self {
-            pawns: 0,
-            rooks: 0,
-            knights: 0,
-            bishops: 0,
-            queens: 0,
-            king: 0,
-            en_passant: 0,
-        }
-    }
-
     pub fn new(color: Color) -> Self {
         let (pawn_row, piece_row) = match color {
             Color::Black => (Board::BLACK_PAWN_ROW, Board::BLACK_PIECE_ROW),

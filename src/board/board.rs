@@ -1,9 +1,10 @@
 use crate::{
     board::{
         castle_rights::CastleRights,
+        movement::{Move, MoveResult},
         piece::{Color, PIECE_TYPES, Piece},
         piece_set::PieceSet,
-        square::{Move, MoveResult, Square},
+        square::Square,
     },
     game::zobrist::Zobrist,
     tui::terminal,
@@ -73,125 +74,6 @@ impl Board {
             hash,
             moves: Vec::with_capacity(Self::MAX_MOVE),
         }
-    }
-
-    pub fn _from_fen(fen: &str) -> Result<Self, String> {
-        let parts: Vec<&str> = fen.split_whitespace().collect();
-
-        if parts.len() != 6 {
-            return Err("Invalid FEN".into());
-        }
-
-        let mut board = Self {
-            white_pieces: PieceSet::_empty(),
-            black_pieces: PieceSet::_empty(),
-            turn: Color::White,
-            white_castle_rights: CastleRights::_none(),
-            black_castle_rights: CastleRights::_none(),
-            zobrist: Zobrist::new(),
-            hash: 0,
-            moves: Vec::with_capacity(Self::MAX_MOVE),
-        };
-
-        let mut row = 7;
-        let mut col = 0;
-
-        for ch in parts[0].chars() {
-            match ch {
-                '/' => {
-                    if col != 8 {
-                        return Err("Invalid FEN board".into());
-                    }
-
-                    row -= 1;
-                    col = 0;
-                }
-
-                '1'..='8' => {
-                    col += ch.to_digit(10).unwrap() as usize;
-                }
-
-                _ => {
-                    let (piece_set, piece) = match ch {
-                        'P' => (&mut board.white_pieces, Piece::Pawn),
-                        'N' => (&mut board.white_pieces, Piece::Knight),
-                        'B' => (&mut board.white_pieces, Piece::Bishop),
-                        'R' => (&mut board.white_pieces, Piece::Rook),
-                        'Q' => (&mut board.white_pieces, Piece::Queen),
-                        'K' => (&mut board.white_pieces, Piece::King),
-
-                        'p' => (&mut board.black_pieces, Piece::Pawn),
-                        'n' => (&mut board.black_pieces, Piece::Knight),
-                        'b' => (&mut board.black_pieces, Piece::Bishop),
-                        'r' => (&mut board.black_pieces, Piece::Rook),
-                        'q' => (&mut board.black_pieces, Piece::Queen),
-                        'k' => (&mut board.black_pieces, Piece::King),
-
-                        _ => return Err(format!("Invalid piece '{}'", ch)),
-                    };
-
-                    if col >= 8 {
-                        return Err("Invalid FEN board".into());
-                    }
-
-                    piece_set.add_piece(Square::new(row, col as i8), piece);
-                    col += 1;
-                }
-            }
-        }
-
-        board.turn = match parts[1] {
-            "w" => Color::White,
-            "b" => Color::Black,
-            _ => return Err("Invalid side to move".into()),
-        };
-
-        let mut white = CastleRights::_none();
-        let mut black = CastleRights::_none();
-
-        if parts[2] != "-" {
-            white = CastleRights::new();
-            black = CastleRights::new();
-
-            if !parts[2].contains('K') {
-                white.right_rook_moved();
-            }
-
-            if !parts[2].contains('Q') {
-                white.left_rook_moved();
-            }
-
-            if !parts[2].contains('k') {
-                black.right_rook_moved();
-            }
-
-            if !parts[2].contains('q') {
-                black.left_rook_moved();
-            }
-        }
-
-        board.white_castle_rights = white;
-        board.black_castle_rights = black;
-
-        if parts[3] != "-" {
-            let bytes = parts[3].as_bytes();
-
-            if bytes.len() != 2 {
-                return Err("Invalid en passant square".into());
-            }
-
-            let file = (bytes[0] - b'a') as usize;
-            let rank = (bytes[1] - b'1') as usize;
-
-            let pos = Square::new(rank as i8, file as i8);
-
-            match board.turn {
-                Color::White => board.black_pieces.set_en_passant(pos),
-                Color::Black => board.white_pieces.set_en_passant(pos),
-            }
-        }
-
-        Ok(board)
     }
 
     fn move_context<'a>(&'a mut self) -> MoveContext<'a> {
@@ -722,18 +604,14 @@ impl Board {
 
         let left_pawn = Square::new(square.row() - pawn_direction, square.column() - 1);
 
-        if left_pawn.is_on_board() {
-            if enemy_pieces.is_piece_type_on(Piece::Pawn, left_pawn) {
-                return true;
-            }
+        if left_pawn.is_on_board() && enemy_pieces.is_piece_type_on(Piece::Pawn, left_pawn) {
+            return true;
         }
 
         let right_pawn = Square::new(square.row() - pawn_direction, square.column() + 1);
 
-        if right_pawn.is_on_board() {
-            if enemy_pieces.is_piece_type_on(Piece::Pawn, right_pawn) {
-                return true;
-            }
+        if right_pawn.is_on_board() && enemy_pieces.is_piece_type_on(Piece::Pawn, right_pawn) {
+            return true;
         }
 
         false
@@ -953,6 +831,28 @@ impl Board {
 
         ascii
     }
+
+    pub fn to_net(&self) -> String {
+        let mut net = String::new();
+
+        for row in (Self::WHITE_PIECE_ROW..=Self::BLACK_PIECE_ROW).rev() {
+            for column in 0..8 {
+                let current_square = Square::new(row, column);
+
+                if let Some(p) = self.white_pieces.get(current_square) {
+                    net.push(p.to_net().to_ascii_uppercase());
+                } else if let Some(p) = self.black_pieces.get(current_square) {
+                    net.push(p.to_net());
+                } else {
+                    net.push('.');
+                }
+            }
+
+            net.push('\n');
+        }
+
+        net
+    }
 }
 
 impl Clone for Board {
@@ -960,10 +860,10 @@ impl Clone for Board {
         Self {
             white_pieces: self.white_pieces.clone(),
             black_pieces: self.black_pieces.clone(),
-            turn: self.turn.clone(),
+            turn: self.turn,
             white_castle_rights: self.white_castle_rights.clone(),
             black_castle_rights: self.black_castle_rights.clone(),
-            hash: self.hash.clone(),
+            hash: self.hash,
             zobrist: self.zobrist.clone(),
             moves: Vec::with_capacity(Self::MAX_MOVE),
         }

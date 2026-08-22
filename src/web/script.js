@@ -1,24 +1,75 @@
 const board = document.getElementById("board");
+const statusMessage = document.getElementById("status");
 
-const position = [
-    ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"],
-    ["♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"],
-    ["♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"]
-];
-
+let position = [];
 let selectedRow;
 let selectedCol;
+
+const unicodePieces = {
+    "K": "♚",
+    "Q": "♛",
+    "R": "♜",
+    "B": "♝",
+    "N": "♞",
+    "P": "♟",
+
+    "k": "♚",
+    "q": "♛",
+    "r": "♜",
+    "b": "♝",
+    "n": "♞",
+    "p": "♟"
+};
+
+function showStatus(message) {
+    statusMessage.textContent = message;
+}
+
+async function sendBotMove() {
+    const response = await fetch("/bot_move", {
+        method: "POST"
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to make bot move: ${response.status}`);
+    }
+
+    return (await response.text()).trim();
+}
+
+async function getBoard() {
+    const response = await fetch("/board");
+
+    if (!response.ok) {
+        throw new Error(`Failed to get board: ${response.status}`);
+    }
+
+    const text = await response.text();
+
+    position = text.trim().split("\n").map(row =>
+        [...row].map(piece => piece === "." ? "" : piece)
+    );
+
+    if (
+        position.length !== 8 ||
+        position.some(row => row.length !== 8)
+    ) {
+        throw new Error("Invalid board received from server");
+    }
+}
 
 function toUci(row, col) {
     const file = String.fromCharCode("a".charCodeAt(0) + col);
     const rank = 8 - row;
 
     return file + rank;
+}
+
+function uciToPosition(square) {
+    const col = square.charCodeAt(0) - "a".charCodeAt(0);
+    const row = 8 - parseInt(square[1]);
+
+    return { row, col };
 }
 
 async function sendMove(move) {
@@ -47,7 +98,21 @@ function drawBoard() {
                 square.classList.add("dark");
             }
 
-            square.textContent = position[row][col];
+            const piece = position[row][col];
+
+            if (piece !== "") {
+                square.textContent = unicodePieces[piece] || piece;
+
+                square.classList.add(
+                    piece === piece.toUpperCase()
+                        ? "white-piece"
+                        : "black-piece"
+                );
+            }
+
+            if (selectedRow === row && selectedCol === col) {
+                square.classList.add("selected");
+            }
 
             square.addEventListener("click", async function() {
                 if (selectedRow === undefined) {
@@ -58,8 +123,7 @@ function drawBoard() {
                     selectedRow = row;
                     selectedCol = col;
 
-                    square.classList.add("selected");
-
+                    drawBoard();
                     return;
                 }
 
@@ -83,23 +147,46 @@ function drawBoard() {
                         result === "Checkmate" ||
                         result === "Draw"
                     ) {
-                        position[row][col] = position[selectedRow][selectedCol];
-                        position[selectedRow][selectedCol] = "";
-
                         selectedRow = undefined;
                         selectedCol = undefined;
 
+                        await getBoard();
                         drawBoard();
 
                         if (result === "Checkmate") {
-                            alert("Checkmate!");
+                            showStatus("Checkmate!");
                         } else if (result === "Draw") {
-                            alert("Draw!");
+                            showStatus("Draw!");
+                        } else {
+                            showStatus("");
+                        }
+
+                        showStatus("Bot is thinking...");
+
+                        try {
+                            const botResult = await sendBotMove();
+
+                            await getBoard();
+                            drawBoard();
+
+                            if (botResult === "Checkmate") {
+                                showStatus("Checkmate!");
+                            } else if (botResult === "Draw") {
+                                showStatus("Draw!");
+                            } else if (botResult === "Ok") {
+                                showStatus("");
+                            } else {
+                                console.error("Unknown bot response:", botResult);
+                                showStatus("");
+                            }
+                        } catch (error) {
+                            console.error("Failed to make bot move:", error);
+                            showStatus("Failed to make bot move.");
                         }
                     }
 
                     else if (result === "Illegal") {
-                        alert("Illegal move.");
+                        showStatus("Illegal move.");
 
                         selectedRow = undefined;
                         selectedCol = undefined;
@@ -109,6 +196,14 @@ function drawBoard() {
 
                     else {
                         console.error("Unknown server response:", result);
+
+                        showStatus("");
+
+                        selectedRow = undefined;
+                        selectedCol = undefined;
+
+                        await getBoard();
+                        drawBoard();
                     }
                 } catch (error) {
                     console.error("Failed to send move:", error);
@@ -116,7 +211,12 @@ function drawBoard() {
                     selectedRow = undefined;
                     selectedCol = undefined;
 
-                    drawBoard();
+                    try {
+                        await getBoard();
+                        drawBoard();
+                    } catch (boardError) {
+                        console.error("Failed to get board:", boardError);
+                    }
                 }
             });
 
@@ -125,4 +225,42 @@ function drawBoard() {
     }
 }
 
-drawBoard();
+async function init() {
+    try {
+        await getBoard();
+        drawBoard();
+    } catch (error) {
+        console.error("Failed to initialize board:", error);
+    }
+}
+
+async function resetGame() {
+    try {
+        const response = await fetch("/reset", {
+            method: "POST"
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to reset game: ${response.status}`);
+        }
+
+        selectedRow = undefined;
+        selectedCol = undefined;
+
+        await getBoard();
+        drawBoard();
+
+        showStatus("");
+    } catch (error) {
+        console.error("Failed to reset game:", error);
+        showStatus("Failed to reset game.");
+    }
+}
+
+document.addEventListener("keydown", function(event) {
+    if (event.key.toLowerCase() === "r") {
+        resetGame();
+    }
+});
+
+init();

@@ -2,8 +2,7 @@ use std::time::{Duration, Instant};
 
 use crate::{
     board::{
-        board::Board,
-        square::{Move, MoveResult},
+        board::Board, movement::{Move, MoveResult}, piece::Color,
     },
     game::{
         position::Position,
@@ -35,20 +34,12 @@ impl Chess {
         }
     }
 
-    pub fn _from_fen(fen: &str, depth: usize, threads: usize) -> Result<Self, String> {
-        let position = Position::_from_fen(fen)?;
+    pub fn reset(&mut self) {
+        self.position = Position::new();
+    }
 
-        let mut thread_tt = Vec::with_capacity(threads);
-        for _ in 0..threads {
-            thread_tt.push(TranspositionTable::new(Self::TT_CAPACITY));
-        }
-
-        Ok(Self {
-            position,
-            thread_tt,
-            threads,
-            depth,
-        })
+    pub fn turn(&self) -> Color {
+        self.position.turn()
     }
 
     pub fn search(&mut self) -> (Move, Duration) {
@@ -210,37 +201,12 @@ impl Chess {
         }
 
         if self.position.is_checkmate() {
-            MoveResult::CheckMate(!self.board().turn())
+            MoveResult::CheckMate
         } else if self.position.is_stalemate() {
             MoveResult::Draw
         } else {
             result
         }
-    }
-
-    pub fn _perft(&mut self, depth: usize, divide: bool) -> usize {
-        if depth == 0 {
-            return 1;
-        }
-
-        let mut positions = 0;
-
-        let legal_moves = self.position.find_legal_moves();
-
-        for m in legal_moves.into_iter() {
-            self.position.save();
-            self.position.make_move(m);
-
-            let count = self._perft(depth - 1, false);
-            if divide {
-                println!("move: {} = {}", m.to_string(), count);
-            }
-            positions += count;
-
-            self.position.undo();
-        }
-
-        positions
     }
 
     pub fn board(&self) -> &Board {

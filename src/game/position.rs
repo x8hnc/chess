@@ -1,7 +1,7 @@
 use crate::board::{
     board::Board,
+    movement::{Move, MoveResult},
     piece::{Color, PIECE_TYPES, Piece},
-    square::{Move, MoveResult},
 };
 
 #[derive(Clone)]
@@ -18,13 +18,8 @@ impl Position {
         }
     }
 
-    pub fn _from_fen(fen: &str) -> Result<Self, String> {
-        let board = Board::_from_fen(fen)?;
-
-        Ok(Self {
-            board,
-            undo_stack: Vec::new(),
-        })
+    pub fn turn(&self) -> Color {
+        self.board.turn()
     }
 
     pub fn hash(&self) -> u64 {
@@ -114,7 +109,7 @@ impl Position {
             return false;
         };
 
-        if movement.promotion() == None {
+        if movement.promotion().is_none() {
             if piece == Piece::Pawn {
                 let promotion_row = match self.board.turn() {
                     Color::White => Board::BLACK_PIECE_ROW,

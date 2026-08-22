@@ -14,17 +14,12 @@ pub struct TTStats {
     pub upper_bound_hit: u64,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub enum Bound {
+    #[default]
     Exact,
     Lower,
     Upper,
-}
-
-impl Default for Bound {
-    fn default() -> Self {
-        Self::Exact
-    }
 }
 
 #[derive(Copy, Clone, Default)]
