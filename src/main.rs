@@ -71,7 +71,7 @@ fn main() -> Result<(), ()> {
         Tui::_from_fen("8/3r4/4r3/8/8/8/5k2/6nK w - - 0 1", depth, threads, white_on_bottom, play_white).unwrap().start();
     } else {
         WebUI::new(
-            "127.0.0.1:7878",
+            "127.0.0.1:8585",
             depth,
             threads,
             white_on_bottom,
