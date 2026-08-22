@@ -67,8 +67,7 @@ fn main() -> Result<(), ()> {
     }
     let white_on_bottom = play_white || force_white_bottom;
     if run_tui {
-        // Tui::new(depth, threads, white_on_bottom, play_white).start();
-        Tui::_from_fen("8/3r4/4r3/8/8/8/5k2/6nK w - - 0 1", depth, threads, white_on_bottom, play_white).unwrap().start();
+        Tui::new(depth, threads, white_on_bottom, play_white).start();
     } else {
         WebUI::new(
             "127.0.0.1:8585",

@@ -54,20 +54,10 @@ impl Tui {
                 console.read_line(&mut user_input).unwrap();
                 user_input = String::from(user_input.trim());
 
-                if user_input.eq_ignore_ascii_case("draw") {
-                    tui_helper::print_board(
-                        &self.chess.board().to_string(self.white_on_bottom),
-                        bot_move,
-                    );
-                    tui_helper::print_message("Draw.");
-                    break;
-                } else if user_input.eq_ignore_ascii_case("resign") {
-                    tui_helper::print_board(
-                        &self.chess.board().to_string(self.white_on_bottom),
-                        bot_move,
-                    );
-                    tui_helper::print_message(&format!("{} won.", !self.chess.board().turn()));
-                    break;
+                if user_input.eq_ignore_ascii_case("reset") {
+                    self.chess.reset();
+                    tui_helper::clear_message();
+                    continue;
                 }
 
                 let Ok(movement) = Move::from_uci(&user_input) else {

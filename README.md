@@ -84,16 +84,9 @@ g8f6
 You can also enter:
 
 ```text
-resign
+reset
 ```
-
-to resign the game, or:
-
-```text
-draw
-```
-
-to declare a draw.
+to reset the game.
 
 ## Defaults
 
