@@ -1,4 +1,5 @@
 pub mod chess;
+mod engine;
 mod position;
-mod transposition_table;
+pub mod transposition_table;
 pub mod zobrist;

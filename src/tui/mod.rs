@@ -67,13 +67,12 @@ impl Tui {
 
                 self.chess.make_move(movement)
             } else {
-                let (bot_move, think_time, best_eval) = self.chess.search();
+                let (bot_move, think_time) = self.chess.search();
                 tui_helper::print_message(
                     &format!(
-                        "Bot moved: {}, in {} seconds. Evaluation: {}.",
+                        "Bot moved: {}, in {} seconds",
                         bot_move,
                         think_time.as_secs_f64(),
-                        best_eval
                     )[..],
                 );
 
