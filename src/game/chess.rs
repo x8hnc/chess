@@ -70,7 +70,7 @@ impl Chess {
 
         if self.position.is_checkmate() {
             MoveResult::CheckMate
-        } else if self.position.is_stalemate() {
+        } else if self.position.is_draw() {
             MoveResult::Draw
         } else {
             result

@@ -44,6 +44,7 @@ pub struct WebUI {
     chess: Chess,
     play_white: bool,
     white_on_bottom: bool,
+    pvp: bool,
 }
 
 impl WebUI {
@@ -53,12 +54,14 @@ impl WebUI {
         threads: usize,
         white_on_bottom: bool,
         play_white: bool,
+        pvp: bool,
     ) -> io::Result<Self> {
         Ok(Self {
             listener: TcpListener::bind(ip)?,
             chess: Chess::new(depth, threads),
             play_white,
             white_on_bottom,
+            pvp,
         })
     }
 
@@ -112,7 +115,7 @@ impl WebUI {
                 RequestType::ResourceOk(content) => ("HTTP/1.1 200 OK", content),
                 RequestType::ResourceErr => ("HTTP/1.1 500 Internal Server Error", String::new()),
                 RequestType::UciOk(movement) => {
-                    if bot_turn {
+                    if bot_turn && !self.pvp {
                         ("HTTP/1.1 400 Not player move", String::new())
                     } else {
                         let move_result = self.chess.make_move(movement);
@@ -140,7 +143,7 @@ impl WebUI {
                     res
                 }
                 RequestType::BotMove => {
-                    if !bot_turn {
+                    if !bot_turn || self.pvp {
                         ("HTTP/1.1 400 Not bot move", String::new())
                     } else {
                         let bot_move = self.chess.search();
@@ -162,7 +165,7 @@ impl WebUI {
                     ("HTTP/1.1 200 OK", String::new())
                 }
                 RequestType::Turn => {
-                    if bot_turn {
+                    if bot_turn && !self.pvp {
                         ("HTTP/1.1 200 OK", String::from("bot"))
                     } else {
                         ("HTTP/1.1 200 OK", String::from("player"))

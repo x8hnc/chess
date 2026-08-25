@@ -115,7 +115,7 @@ impl Worker {
             let mut score = -Chess::CHECKMATE_SCORE;
             score -= depth as isize * Chess::EXTRA_TURN_SCORE;
             return score;
-        } else if position.is_stalemate() {
+        } else if position.is_draw() {
             return 0;
         }
 

@@ -10,14 +10,16 @@ pub struct Tui {
     chess: Chess,
     white_on_bottom: bool,
     play_white: bool,
+    pvp: bool,
 }
 
 impl Tui {
-    pub fn new(depth: usize, threads: usize, white_on_bottom: bool, play_white: bool) -> Self {
+    pub fn new(depth: usize, threads: usize, white_on_bottom: bool, play_white: bool, pvp: bool) -> Self {
         Self {
             chess: Chess::new(depth, threads),
             white_on_bottom,
             play_white,
+            pvp,
         }
     }
 
@@ -32,6 +34,7 @@ impl Tui {
             chess: Chess::_from_fen(fen, depth, threads)?,
             white_on_bottom,
             play_white,
+            pvp: false,
         })
     }
 

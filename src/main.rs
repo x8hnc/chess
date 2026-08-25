@@ -7,7 +7,6 @@ mod game;
 mod tui;
 mod web;
 
-// TODO: implement draw by repetition
 // TODO: implement draw by insufficient material
 // TODO: implement draw by 50 move rule
 // TODO: implement black on the bottom for web ui
@@ -22,6 +21,7 @@ fn main() -> Result<(), ()> {
     let mut seen = HashSet::new();
     let mut force_white_bottom = false;
     let mut run_tui = false;
+    let mut pvp = false;
 
     for arg in args {
         if threads_next {
@@ -59,6 +59,7 @@ fn main() -> Result<(), ()> {
             "-d" => depth_next = true,
             "-f" => force_white_bottom = true,
             "-h" => run_tui = true,
+            "-p" => pvp = true,
             _ => {
                 eprintln!("Unknown argument {}", arg);
                 return Err(());
@@ -67,7 +68,7 @@ fn main() -> Result<(), ()> {
     }
     let white_on_bottom = play_white || force_white_bottom;
     if run_tui {
-        Tui::new(depth, threads, white_on_bottom, play_white).start();
+        Tui::new(depth, threads, white_on_bottom, play_white, pvp).start();
     } else {
         WebUI::new(
             "127.0.0.1:8585",
@@ -75,6 +76,7 @@ fn main() -> Result<(), ()> {
             threads,
             white_on_bottom,
             play_white,
+            pvp,
         )
         .unwrap()
         .start();

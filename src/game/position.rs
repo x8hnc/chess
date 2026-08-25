@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::board::{
     Board,
     movement::{Move, MoveResult},
@@ -7,14 +9,19 @@ use crate::board::{
 #[derive(Clone)]
 pub struct Position {
     board: Board,
+    board_history: HashMap<u64, u8>,
     undo_stack: Vec<Board>,
 }
 
 impl Position {
     pub fn new() -> Self {
+        let board = Board::new();
+        let mut board_history = HashMap::new();
+        board_history.insert(board.hash(), 1);
         Self {
-            board: Board::new(),
+            board,
             undo_stack: Vec::new(),
+            board_history,
         }
     }
 
@@ -33,6 +40,7 @@ impl Position {
         Ok(Self {
             board: Board::_from_fen(fen)?,
             undo_stack: vec![],
+            board_history: HashMap::new(),
         })
     }
 
@@ -101,12 +109,16 @@ impl Position {
         legal_moves
     }
 
-    pub fn is_stalemate(&mut self) -> bool {
+    fn is_stalemate(&mut self) -> bool {
         if self.board.is_in_check() {
             return false;
         }
 
         self.find_legal_moves().is_empty()
+    }
+
+    pub fn is_draw(&mut self) -> bool {
+        *self.board_history.get(&self.board.hash()).unwrap_or(&0) >= 3 || self.is_stalemate()
     }
 
     pub fn is_checkmate(&mut self) -> bool {
@@ -160,6 +172,7 @@ impl Position {
         }
 
         self.board.end_turn();
+        *self.board_history.entry(self.board.hash()).or_insert(0) += 1;
 
         MoveResult::Ok
     }
