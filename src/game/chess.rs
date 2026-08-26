@@ -19,8 +19,8 @@ pub struct Chess {
 
 impl Chess {
     pub const TT_CAPACITY: usize = 24;
-    pub const CHECKMATE_SCORE: isize = 300000;
-    pub const EXTRA_TURN_SCORE: isize = 100;
+    pub const CHECKMATE_SCORE: i32 = 10000;
+    pub const EXTRA_TURN_SCORE: i32 = 10;
 
     pub fn new(depth: usize, threads: usize) -> Self {
         let mut ttables = Vec::with_capacity(threads);
