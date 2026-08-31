@@ -35,18 +35,6 @@ impl Chess {
         }
     }
 
-    pub fn _from_fen(fen: &str, depth: usize, threads: usize) -> Result<Self, String> {
-        let mut ttables = Vec::with_capacity(threads);
-        for _ in 0..threads {
-            ttables.push(TranspositionTable::new(Self::TT_CAPACITY));
-        }
-        Ok(Self {
-            position: Position::_from_fen(fen)?,
-            threads,
-            depth,
-        })
-    }
-
     pub fn reset(&mut self) {
         self.position = Position::new();
     }

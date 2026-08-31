@@ -66,7 +66,9 @@ fn main() -> Result<(), ()> {
             }
         }
     }
+
     let white_on_bottom = play_white || force_white_bottom;
+
     if run_tui {
         Tui::new(depth, threads, white_on_bottom, play_white, pvp).start();
     } else {

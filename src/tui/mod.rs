@@ -23,21 +23,6 @@ impl Tui {
         }
     }
 
-    pub fn _from_fen(
-        fen: &str,
-        depth: usize,
-        threads: usize,
-        white_on_bottom: bool,
-        play_white: bool,
-    ) -> Result<Self, String> {
-        Ok(Self {
-            chess: Chess::_from_fen(fen, depth, threads)?,
-            white_on_bottom,
-            play_white,
-            pvp: false,
-        })
-    }
-
     pub fn start(mut self) {
         let console = std::io::stdin();
         let mut user_input = String::new();
