@@ -43,7 +43,7 @@ pub struct WebUI {
     listener: TcpListener,
     chess: Chess,
     play_white: bool,
-    white_on_bottom: bool,
+    _white_on_bottom: bool,
     pvp: bool,
 }
 
@@ -60,7 +60,7 @@ impl WebUI {
             listener: TcpListener::bind(ip)?,
             chess: Chess::new(depth, threads),
             play_white,
-            white_on_bottom,
+            _white_on_bottom: white_on_bottom,
             pvp,
         })
     }

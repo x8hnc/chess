@@ -10,7 +10,7 @@ pub struct Tui {
     chess: Chess,
     white_on_bottom: bool,
     play_white: bool,
-    pvp: bool,
+    _pvp: bool,
 }
 
 impl Tui {
@@ -19,7 +19,7 @@ impl Tui {
             chess: Chess::new(depth, threads),
             white_on_bottom,
             play_white,
-            pvp,
+            _pvp: pvp,
         }
     }
 

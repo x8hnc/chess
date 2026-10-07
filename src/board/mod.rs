@@ -1,8 +1,8 @@
 mod castle_rights;
+pub mod movement;
 pub mod piece;
 mod piece_set;
 pub mod square;
-pub mod movement;
 
 use crate::{
     board::{
@@ -27,6 +27,7 @@ struct MoveContext<'a> {
     pawn_direction: i8,
     zobrist: &'a Zobrist,
     turn: Color,
+    move_count: &'a mut u64,
 }
 
 pub struct Board {
@@ -38,6 +39,7 @@ pub struct Board {
     hash: u64,
     zobrist: Zobrist,
     moves: Vec<Move>,
+    move_count: u64,
 }
 
 impl Board {
@@ -79,6 +81,7 @@ impl Board {
             zobrist,
             hash,
             moves: Vec::with_capacity(Self::MAX_MOVE),
+            move_count: 0,
         }
     }
 
@@ -104,6 +107,7 @@ impl Board {
                 pawn_direction: 1,
                 zobrist: &self.zobrist,
                 turn: self.turn,
+                move_count: &mut self.move_count,
             },
             Color::Black => MoveContext {
                 friendly_pieces: &mut self.black_pieces,
@@ -116,6 +120,7 @@ impl Board {
                 pawn_direction: -1,
                 zobrist: &self.zobrist,
                 turn: self.turn,
+                move_count: &mut self.move_count,
             },
         }
     }
@@ -162,6 +167,7 @@ impl Board {
 
     fn handle_capture(ctx: &mut MoveContext, movement: &Move, new_hash: &mut u64) {
         if let Some(captured) = ctx.enemy_pieces.get(movement.to()) {
+            *ctx.move_count = 0;
             *new_hash ^= ctx.zobrist.get_piece(!ctx.turn, captured, movement.to());
             if captured == Piece::Rook {
                 let (old_enemy_left, old_enemy_right) = (
@@ -268,12 +274,15 @@ impl Board {
 
         let move_was_jump = movement.from().row() == ctx.pawn_row
             && movement.to().row().abs_diff(ctx.pawn_row) == 2;
-        if piece == Piece::Pawn && move_was_jump {
-            Self::handle_pawn_jump(&mut ctx, &movement, &mut new_hash);
-        } else if piece == Piece::Pawn && ctx.enemy_pieces.is_en_passant(movement.to()) {
-            Self::handle_en_passant(&mut ctx, &movement, &mut new_hash);
-        } else if let Some(promoted_piece) = movement.promotion() {
-            Self::handle_promotion(&mut ctx, &movement, promoted_piece, &mut new_hash);
+        if piece == Piece::Pawn {
+            *ctx.move_count = 0;
+            if move_was_jump {
+                Self::handle_pawn_jump(&mut ctx, &movement, &mut new_hash);
+            } else if ctx.enemy_pieces.is_en_passant(movement.to()) {
+                Self::handle_en_passant(&mut ctx, &movement, &mut new_hash);
+            } else if let Some(promoted_piece) = movement.promotion() {
+                Self::handle_promotion(&mut ctx, &movement, promoted_piece, &mut new_hash);
+            }
         } else if move_was_castle {
             Self::handle_castle(&mut ctx, &movement, &mut new_hash);
         } else {
@@ -881,6 +890,7 @@ impl Clone for Board {
             hash: self.hash,
             zobrist: self.zobrist.clone(),
             moves: Vec::with_capacity(Self::MAX_MOVE),
+            move_count: self.move_count,
         }
     }
 }

@@ -8,7 +8,6 @@ mod tui;
 mod web;
 
 // TODO: implement draw by insufficient material
-// TODO: implement draw by 50 move rule
 // TODO: implement black on the bottom for web ui
 
 fn main() -> Result<(), ()> {

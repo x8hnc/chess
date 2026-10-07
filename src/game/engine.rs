@@ -61,7 +61,7 @@ fn worker(
     depth: usize,
     tt: Arc<TranspositionTable>,
 ) -> JoinHandle<(Move, i32)> {
-    let thread = thread::spawn(move || {
+    thread::spawn(move || {
         loop {
             let message = receiver.lock().unwrap().recv();
             match message {
@@ -85,9 +85,7 @@ fn worker(
         }
 
         (best_move, best_eval)
-    });
-
-    thread
+    })
 }
 
 fn negamax(
