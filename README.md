@@ -8,7 +8,7 @@ A chess engine with both a web-based UI and a terminal TUI. The engine supports 
 Run the engine with:
 
 ```bash
-cargo run -- [options]
+cargo run --release -- [options]
 ```
 
 By default, the engine starts the **Web UI** on:
@@ -34,31 +34,19 @@ Arguments cannot be specified more than once.
 Start the default Web UI:
 
 ```bash
-cargo run
+cargo run --release
 ```
 
 Play as Black:
 
 ```bash
-cargo run -- -b
+cargo run --release -- -b
 ```
 
 Use 8 threads and a search depth of 10:
 
 ```bash
-cargo run -- -t 8 -d 10
-```
-
-Play as Black with White forced to the bottom of the board:
-
-```bash
-cargo run -- -b -f
-```
-
-Start the TUI with 12 threads and depth 8:
-
-```bash
-cargo run -- -h -t 12 -d 8
+cargo run --release -- -t 8 -d 10
 ```
 
 ## Web UI
