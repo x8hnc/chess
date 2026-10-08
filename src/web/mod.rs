@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{
+    Options,
     board::movement::{Move, MoveResult},
     game::chess::Chess,
 };
@@ -48,20 +49,13 @@ pub struct WebUI {
 }
 
 impl WebUI {
-    pub fn new(
-        ip: &str,
-        depth: usize,
-        threads: usize,
-        white_on_bottom: bool,
-        play_white: bool,
-        pvp: bool,
-    ) -> io::Result<Self> {
+    pub fn new(ip: &str, options: Options) -> io::Result<Self> {
         Ok(Self {
             listener: TcpListener::bind(ip)?,
-            chess: Chess::new(depth, threads),
-            play_white,
-            _white_on_bottom: white_on_bottom,
-            pvp,
+            chess: Chess::new(options.depth, options.thread_count),
+            play_white: options.play_white,
+            _white_on_bottom: options.force_white_bottom,
+            pvp: options.pvp,
         })
     }
 

@@ -10,21 +10,38 @@ mod web;
 // TODO: implement draw by insufficient material
 // TODO: implement black on the bottom for web ui
 
+struct Options {
+    play_white: bool,
+    thread_count: usize,
+    depth: usize,
+    force_white_bottom: bool,
+    run_tui: bool,
+    pvp: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            play_white: true,
+            thread_count: 20,
+            depth: 6,
+            force_white_bottom: false,
+            run_tui: false,
+            pvp: false,
+        }
+    }
+}
+
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let mut play_white = true;
+    let mut options = Options::default();
     let mut threads_next = false;
     let mut depth_next = false;
-    let mut threads = 20;
-    let mut depth = 6;
     let mut seen = HashSet::new();
-    let mut force_white_bottom = false;
-    let mut run_tui = false;
-    let mut pvp = false;
 
     for arg in args {
         if threads_next {
-            threads = match arg.parse::<usize>() {
+            options.thread_count = match arg.parse::<usize>() {
                 Ok(threads) => threads,
                 Err(_) => {
                     eprintln!("{} is not a number", arg);
@@ -34,7 +51,7 @@ fn main() -> Result<(), ()> {
             threads_next = false;
             continue;
         } else if depth_next {
-            depth = match arg.parse::<usize>() {
+            options.depth = match arg.parse::<usize>() {
                 Ok(threads) => threads,
                 Err(_) => {
                     eprintln!("{} is not a number", arg);
@@ -53,12 +70,12 @@ fn main() -> Result<(), ()> {
         }
 
         match &arg[..] {
-            "-b" => play_white = false,
+            "-b" => options.play_white = false,
             "-t" => threads_next = true,
             "-d" => depth_next = true,
-            "-f" => force_white_bottom = true,
-            "-h" => run_tui = true,
-            "-p" => pvp = true,
+            "-f" => options.force_white_bottom = true,
+            "-h" => options.run_tui = true,
+            "-p" => options.pvp = true,
             _ => {
                 eprintln!("Unknown argument {}", arg);
                 return Err(());
@@ -66,21 +83,12 @@ fn main() -> Result<(), ()> {
         }
     }
 
-    let white_on_bottom = play_white || force_white_bottom;
+    options.force_white_bottom = options.play_white || options.force_white_bottom;
 
-    if run_tui {
-        Tui::new(depth, threads, white_on_bottom, play_white, pvp).start();
+    if options.run_tui {
+        Tui::new(options).start();
     } else {
-        WebUI::new(
-            "127.0.0.1:8585",
-            depth,
-            threads,
-            white_on_bottom,
-            play_white,
-            pvp,
-        )
-        .unwrap()
-        .start();
+        WebUI::new("127.0.0.1:8585", options).unwrap().start();
     }
     Ok(())
 }

@@ -19,13 +19,14 @@ http://127.0.0.1:8585
 
 ### Options
 
-| Flag | Argument    | Description                                         | Default |
-| ---- | ----------- | --------------------------------------------------- | ------- |
-| `-b` | —           | Play as Black                                       | White   |
-| `-t` | `<threads>` | Set the number of search threads                    | `20`    |
-| `-d` | `<depth>`   | Set the search depth                                | `6`     |
-| `-f` | —           | Force the board to display with White at the bottom | Off     |
-| `-h` | —           | Start the terminal UI instead of the Web UI         | Web UI  |
+| Flag | Argument    | Description                                         | Default           |
+| ---- | ----------- | --------------------------------------------------- | ------------------|
+| `-b` | —           | Play as Black                                       | White             |
+| `-t` | `<threads>` | Set the number of search threads                    | `20`              |
+| `-d` | `<depth>`   | Set the search depth                                | `6`               |
+| `-f` | —           | Force the board to display with White at the bottom | Off               |
+| `-h` | —           | Start the terminal UI instead of the Web UI         | Web UI            |
+| `-p` | —           | Play locally agaist another player                  | Play against bot  |
 
 Arguments cannot be specified more than once.
 

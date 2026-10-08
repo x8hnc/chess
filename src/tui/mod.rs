@@ -1,6 +1,5 @@
 use crate::{
-    board::movement::{Move, MoveResult},
-    game::chess::Chess,
+    Options, board::movement::{Move, MoveResult}, game::chess::Chess
 };
 
 pub mod terminal;
@@ -10,16 +9,16 @@ pub struct Tui {
     chess: Chess,
     white_on_bottom: bool,
     play_white: bool,
-    _pvp: bool,
+    pvp: bool,
 }
 
 impl Tui {
-    pub fn new(depth: usize, threads: usize, white_on_bottom: bool, play_white: bool, pvp: bool) -> Self {
+    pub fn new(options: Options) -> Self {
         Self {
-            chess: Chess::new(depth, threads),
-            white_on_bottom,
-            play_white,
-            _pvp: pvp,
+            chess: Chess::new(options.depth, options.thread_count),
+            white_on_bottom: options.force_white_bottom,
+            play_white: options.play_white,
+            pvp: options.pvp,
         }
     }
 
@@ -31,6 +30,9 @@ impl Tui {
         tui_helper::print_current_turn(self.chess.board().turn());
 
         let mut bot_move = !self.play_white;
+        if self.pvp {
+            bot_move = false;
+        }
 
         loop {
             tui_helper::print_board(
@@ -73,6 +75,9 @@ impl Tui {
                         tui_helper::clear_message();
                     }
                     bot_move = !bot_move;
+                    if self.pvp {
+                        bot_move = false;
+                    }
                 }
                 MoveResult::Illegal => {
                     tui_helper::print_message("Move is not legal.");
