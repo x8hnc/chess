@@ -76,12 +76,3 @@ You can also enter:
 reset
 ```
 to reset the game.
-
-## Defaults
-
-* **Threads:** 20
-* **Search depth:** 6
-* **Side:** White
-* **Board orientation:** White at the bottom
-* **Interface:** Web UI
-* **Web address:** `127.0.0.1:8585`
