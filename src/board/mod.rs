@@ -268,6 +268,7 @@ impl Board {
 
         Self::update_castle_rights(&mut ctx, piece, &movement, &mut new_hash);
         Self::handle_piece_move(&mut ctx, piece, &movement, &mut new_hash);
+        *ctx.move_count += 1;
 
         let move_was_castle =
             piece == Piece::King && movement.to().column().abs_diff(movement.from().column()) == 2;
@@ -876,6 +877,10 @@ impl Board {
         }
 
         net
+    }
+
+    pub fn move_count(&self) -> u64 {
+        self.move_count
     }
 }
 

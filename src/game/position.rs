@@ -110,7 +110,9 @@ impl Position {
     }
 
     pub fn is_draw(&mut self) -> bool {
-        *self.board_history.get(&self.board.hash()).unwrap_or(&0) >= 3 || self.is_stalemate()
+        self.board.move_count() >= 100
+            || *self.board_history.get(&self.board.hash()).unwrap_or(&0) >= 3
+            || self.is_stalemate()
     }
 
     pub fn is_checkmate(&mut self) -> bool {
